@@ -1,5 +1,5 @@
 ---
-title: "Breast Cancer Royston Altman"
+title: "Risk-Evaluation: Breast Cancer Royston-Altman"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output: html_document
@@ -11,15 +11,51 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Evaluation of RISK survival models
+
+This document highlights the use of
+
+-   RRPlot(),
+
+-   CoxRiskCalibration(), and
+
+-   CalibrationProbPoissonRisk,
+
+for the evaluation (RRPlot), and calibration of cox models (CoxRiskCalibration) or logistic models (CalibrationProbPoissonRisk) of survival data.
+
+Furthermore, it can be used to evaluate any Risk index that reruns the probability of a future event on external data-set.
+
+This document will use the survival::rotterdam, and survival::gbsg data-sets to train and predict the risk of cancer recurrence after surgery. Both Cox and Logistic models will be trained and evaluated.
+
+Here are some sample plots returned by the evaluated functions:
+
+![](images/paste-20250661.png){width="281"}
+
+![](images/paste-410F38EB.png){width="278"}
+
+![](images/paste-41F5E9F1.png)
+
+![](images/paste-79F43E17.png)
+
+## The libraries
+
 ```{r}
 library(survival)
 library(FRESA.CAD)
 source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-
+source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+op <- par(no.readonly = TRUE)
+pander::panderOptions('digits', 3)
+pander::panderOptions('table.split.table', 400)
+pander::panderOptions('keep.trailing.zeros',TRUE)
 
 ```
 
-```{r}
+## Breast Cancer Royston-Altman data
+
+### survival::rotterdam conditioning
+
+```{r results = "asis"}
 gbsgdata <- gbsg
 rownames(gbsgdata) <- gbsgdata$pid
 gbsgdata$pid <- NULL
@@ -33,37 +69,41 @@ odata$rtime <- NULL
 odata$recur <- NULL
 
 odata <- odata[,colnames(odata) %in% colnames(gbsgdata)]
-table(odata$size) 
-odata$size <- 10*(odata$size=="<=20") + 35*(odata$size=="20-50") + 60*(odata$size==">50")
-table(odata$size) 
 
-data <- as.data.frame(model.matrix(Surv(rfstime,status)~.*age,odata))
-#data <- as.data.frame(model.matrix(Surv(rfstime,status)~.,odata))
+odata$size <- 10*(odata$size=="<=20") + 
+  35*(odata$size=="20-50") + 
+  60*(odata$size==">50")
+
+data <- as.data.frame(model.matrix(Surv(rfstime,status)~.*.,odata))
 
 data$`(Intercept)` <- NULL
-table(odata[rownames(data),"status"])
 
 dataBrestCancerTrain <- cbind(time=odata[rownames(data),"rfstime"],status=odata[rownames(data),"status"],data)
-table(dataBrestCancerTrain$status)
+
 colnames(dataBrestCancerTrain) <-str_replace_all(colnames(dataBrestCancerTrain),":","_")
 colnames(dataBrestCancerTrain) <-str_replace_all(colnames(dataBrestCancerTrain)," ","")
 colnames(dataBrestCancerTrain) <-str_replace_all(colnames(dataBrestCancerTrain),"\\.","_")
 colnames(dataBrestCancerTrain) <-str_replace_all(colnames(dataBrestCancerTrain),"-","_")
 colnames(dataBrestCancerTrain) <-str_replace_all(colnames(dataBrestCancerTrain),">","_")
-dataBrestCancerTrain$time <- dataBrestCancerTrain$time/365
+dataBrestCancerTrain$time <- dataBrestCancerTrain$time/365 ## To years
 
 
+pander::pander(table(odata[rownames(data),"status"]),caption="rotterdam")
 
-colnames(gbsgdata)
+
+```
+
+### The survival::gbsg data conditioning
+
+```{r results = "asis"}
+
 gbsgdata <- gbsgdata[,colnames(odata)]
-data <- as.data.frame(model.matrix(Surv(rfstime,status)~.*age,gbsgdata))
-#data <- as.data.frame(model.matrix(Surv(rfstime,status)~.,gbsgdata))
+data <- as.data.frame(model.matrix(Surv(rfstime,status)~.*.,gbsgdata))
 
 data$`(Intercept)` <- NULL
-table(odata[rownames(data),"status"])
 
 dataBrestCancerTest <- cbind(time=gbsgdata[rownames(data),"rfstime"],status=gbsgdata[rownames(data),"status"],data)
-table(gbsgdata$status)
+
 colnames(dataBrestCancerTest) <-str_replace_all(colnames(dataBrestCancerTest),":","_")
 colnames(dataBrestCancerTest) <-str_replace_all(colnames(dataBrestCancerTest)," ","")
 colnames(dataBrestCancerTest) <-str_replace_all(colnames(dataBrestCancerTest),"\\.","_")
@@ -71,210 +111,323 @@ colnames(dataBrestCancerTest) <-str_replace_all(colnames(dataBrestCancerTest),"-
 colnames(dataBrestCancerTest) <-str_replace_all(colnames(dataBrestCancerTest),">","_")
 dataBrestCancerTest$time <- dataBrestCancerTest$time/365
 
+pander::pander(table(odata[rownames(data),"status"]), caption="gbsg")
 
 
 ```
 
-## Modeling
-```{r}
+## Cox Modeling
 
+```{r results = "asis"}
 
-ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,loops=0,NumberofRepeats = 3)
-#ml$bagging$bagged.model$formula.List
-
-#dataBrestCancerR <- subset(dataBrestCancerTrain, time>=5*365 | status==1)
-#dataBrestCancerR$status <- dataBrestCancerR$status * (dataBrestCancerR$time < 5*365)
-#riskInterval <- median(subset(dataBrestCancerR,status==1)$time)/365
-                
-
-#dataBrestCancerR$time <- NULL
-#table(dataBrestCancerTrain$status)
-#table(dataBrestCancerR$status)
-#ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=20,NumberofRepeats = 10)
-
+ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,loops=0)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
 
-## Estimate h0 and Interval Time
+## Cox Model Performance
 
-```{r}
+Here we evaluate the model using the RRPlot() function.
 
+### The evaluation of the raw Cox model with RRPlot()
 
-CalibrationProbPoissonRisk <- function(Riskdata)
-### Risk data is a matrix of a Poisson event with Event, Probability of Event>0, and Time to Event]
-{
+Here we will use the predicted event probability assuming a baseline hazard for events withing 5 years
 
-  Riskdata <- as.data.frame(Riskdata)
-  colnames(Riskdata) <- c("Event","pGZ","Time")
-  observed <- sum(Riskdata$Event)
-  meaninterval <- mean(Riskdata[Riskdata$Event==1,"Time"]);
-  h0 <- 1.0/meaninterval
-  index <- log(-log(1.0-Riskdata$pGZ)/h0)
-  hazard <- h0*exp(index)
-  probGZero <- 1.0-exp(-hazard)
-  expected <- sum(probGZero)
-  delta <- abs(observed-expected)/observed
-  while (delta>0.005)
-  {
-    gain <- expected/observed
-    h0 <- h0/gain
-    hazard <- h0*exp(index)
-    probGZero <- 1.0-exp(-hazard)
-    expected <- sum(probGZero)
-    delta <- abs(observed-expected)/observed
-  }
-  timeInterval <- 2.0*meaninterval
-  timeSorted <- Riskdata
-  timeSorted$hazard <- hazard
-  timeSorted <- timeSorted[order(Riskdata$Time),]
-  Ahazard <- 0
-  for (idx in c(1:nrow(timeSorted)))
-  {
-    nevent <- timeSorted[idx,"hazard"]*timeSorted[idx,"Time"]/timeInterval
-    if (nevent > 1.0) nevent <- 1.0
-    Ahazard <- Ahazard + nevent
-  }
-  timeInterval <- timeInterval*Ahazard/observed
-  Ahazard <- 0
-  for (idx in c(1:nrow(timeSorted)))
-  {
-    nevent <- timeSorted[idx,"hazard"]*timeSorted[idx,"Time"]/timeInterval
-    if (nevent > 1.0) nevent <- 1.0
-    Ahazard <- Ahazard + nevent
-  }
-  
-  result <- list(index=index,
-                 probGZero=probGZero,
-                 hazard=hazard,
-                 h0=h0,
-                 timeInterval = timeInterval,
-                 meaninterval = meaninterval,
-                 Ahazard=Ahazard,
-                 delta=delta)
-  return (result)
-}
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-CoxRiskCalibration <- function(ml,data,outcome,time)
-{
-  index <- predict(ml,data)
-  meaninterval <- mean(data[data[,outcome]==1,time]);
-  h0 <- 1.0/meaninterval
-  hazard <- h0*exp(index)
-  probGZero <- 1.0-exp(-hazard)
+index <- predict(ml,dataBrestCancerTrain)
+timeinterval <- 5 # Five years
 
-  Riskdata <- cbind(data[,outcome],probGZero,data[,time])
-  result <- CalibrationProbPoissonRisk(Riskdata)
-  
-  # observed <- sum(data[,outcome])
-  # meaninterval <- mean(data[data[,outcome]==1,time]);
-  # h0 <- 1.0/meaninterval
-  # index <- predict(ml,data)
-  # hazard <- h0*exp(index)
-  # probGZero <- 1.0-exp(-hazard)
-  # expected <- sum(probGZero)
-  # delta <- abs(observed-expected)/observed
-  # while (delta>0.005)
-  # {
-  #   gain <- expected/observed
-  #   h0 <- h0/gain
-  #   hazard <- h0*exp(index)
-  #   probGZero <- 1.0-exp(-hazard)
-  #   expected <- sum(probGZero)
-  #   delta <- abs(observed-expected)/observed
-  # }
-  # timeInterval <- 2.0*meaninterval
-  # timeSorted <- data
-  # timeSorted$hazard <- hazard
-  # timeSorted <- timeSorted[order(data[,time]),]
-  # Ahazard <- 0
-  # for (idx in c(1:nrow(timeSorted)))
-  # {
-  #   nevent <- timeSorted[idx,"hazard"]*timeSorted[idx,time]/timeInterval
-  #   if (nevent > 1.0) nevent <- 1.0
-  #   Ahazard <- Ahazard + nevent
-  # }
-  # timeInterval <- timeInterval*Ahazard/observed
-  # Ahazard <- 0
-  # for (idx in c(1:nrow(timeSorted)))
-  # {
-  #   nevent <- timeSorted[idx,"hazard"]*timeSorted[idx,time]/timeInterval
-  #   if (nevent > 1.0) nevent <- 1.0
-  #   Ahazard <- Ahazard + nevent
-  # }
-  # 
-  # result <- list(index=index,
-  #                probGZero=probGZero,
-  #                hazard=hazard,
-  #                h0=h0,
-  #                timeInterval=timeInterval,
-  #                meaninterval = meaninterval,
-  #                Ahazard=Ahazard,
-  #                delta=delta)
-  return (result)
-}
+h0 <- sum(dataBrestCancerTrain$status & dataBrestCancerTrain$time < timeinterval)
+h0 <- h0/nrow(subset(dataBrestCancerTrain,time > timeinterval | status==1))
 
+rdata <- cbind(dataBrestCancerTrain$status,ppoisGzero(index,h0))
 
-
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=dataBrestCancerTrain$time,
+                     title="Raw Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
 
 ```
 
-```{r}
+As we can see the Observed probability as well as the Time vs. Events are not calibrated.
+
+### Analyzing RRPlot() outputs
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+### Cox Calibration
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 op <- par(no.readonly = TRUE)
 
-table(dataBrestCancerTrain$status)
 
 calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time")
 
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+```
+
+### The RRplot() of the calibrated model
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 h0 <- calprob$h0
 timeinterval <- calprob$timeInterval;
-summary(calprob$prob)
 
 rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
-                     title="Breast Cancer",
+                     title="Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
+```
 
+### Analyzing RRPlot() outputs of the calibrated model
 
-pre <- predict(ml,dataBrestCancerTest)
-pp <- predictionStats_binary(cbind(dataBrestCancerTest$status,pre),plotname="Breast Cancer")
+```{r results = "asis"}
 
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
 
-pre <- h0*exp(pre)
-summary(pre)
-prob <- (1.0-dpois(0,pre))
-summary(prob)
+```
 
+## Performance on the external data set
+
+```{r results = "asis", warning = FALSE, dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+index <- predict(ml,dataBrestCancerTest)
+pp <- predictionStats_binary(cbind(dataBrestCancerTest$status,index),plotname="Breast Cancer")
 par(op)
+
+
+prob <- ppoisGzero(index,h0)
 rdata <- cbind(dataBrestCancerTest$status,prob)
-pp <- predictionStats_binary(rdata,plotname="Breast Cancer")
-par(op)
 rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataBrestCancerTest$time,
-                     title="Breast Cancer: Test",
+                     title="Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
 par(op)
 
+```
+
+### The Evaluation results of validation data set
+
+```{r results = "asis"}
+pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+
+```
+
+### Calibrating the index on the test data
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 calprob <- CoxRiskCalibration(ml,dataBrestCancerTest,"status","time")
 
-h0 <- calprob$h0
-timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataBrestCancerTest$status,calprob$prob)
 
 rrAnalysis <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTest$time,
-                     title="Breast Cancer: Test",
+                     title="Recalibrated Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
-                     riskTimeInterval=timeinterval)
+                     riskTimeInterval=calprob$timeInterval)
+
+```
+
+### The Evaluation results of calibrated model on test data set
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+
+```
+
+## Logistic Model
+
+Here we train a logistic model on the same data set
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+## Only label subjects that present event withing five years
+
+dataBrestCancerR <- subset(dataBrestCancerTrain, time>=5 | status==1)
+dataBrestCancerR$status <- dataBrestCancerR$status * (dataBrestCancerR$time < 5)
+dataBrestCancerR$time <- NULL
+
+ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=0)
+
+sm <- summary(ml)
+pander::pander(sm$coefficients)
+
+```
+
+## Logistic Model Performance
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+op <- par(no.readonly = TRUE)
+
+## No-calibrated
+rdata <- cbind(dataBrestCancerTrain$status,predict(ml,dataBrestCancerTrain))
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=dataBrestCancerTrain$time,
+                     title="Logistic Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=5.0)
+par(op)
+
 
 
 ```
 
+### The Evaluaiton of the training
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+### Results on the validation set using Logistic model
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+pre <- predict(ml,dataBrestCancerTest)
+rdata <- cbind(dataBrestCancerTest$status,pre)
+
+rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
+                     timetoEvent=dataBrestCancerTest$time,
+                     title="Logistic Test: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=5)
+
+par(op)
+
+```
+
+### The evaluation of the validation
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+
+```
+
+## Logistic Model Poisson Calibration
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+riskdata <- cbind(dataBrestCancerTrain$status,predict(ml,dataBrestCancerTrain),dataBrestCancerTrain$time)
+calprob <- CalibrationProbPoissonRisk(riskdata)
+
+timeinterval <- calprob$timeInterval;
+gain <- calprob$hazardGain
+
+rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
+
+
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=dataBrestCancerTrain$time,
+                     title="Adj Logistic Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+
+par(op)
+
+
+```
+
+### The Evaluaiton of the calibrated logistic: training
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+probLog <- predict(ml,dataBrestCancerTest)
+aprob <- adjustProb(probLog,gain)
+
+rdata <- cbind(dataBrestCancerTest$status,aprob)
+rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
+                     timetoEvent=dataBrestCancerTest$time,
+                     title="Adj Logistic Test: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+```
+
+### The evaluation of the calibrated validation
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+
+```
