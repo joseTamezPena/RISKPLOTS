@@ -16,45 +16,121 @@ library(survival)
 library(FRESA.CAD)
 #library(corrplot)
 source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 
 
 ```
 
-```{r}
+```{r results = "asis"}
 
 
-data <- model.frame(Surv(time,status)~.,lung,na.action=NULL)
+data <- model.frame(Surv(time,status)~.*.,lung,na.action=NULL)
+colnames(data) <-str_replace_all(colnames(data),":","_")
+colnames(data) <-str_replace_all(colnames(data),"\\.","_")
+
 data$inst <- NULL
 data$`Surv(time, status)` <- NULL
-dataLung <- cbind(time=lung$time,status=lung$status-1,data)
+dataLung <- cbind(time=lung$time/365,status=lung$status-1,data)
 dataLung <- dataLung[complete.cases(dataLung),]
+pander::pander(table(dataLung$status))
+pander::pander(summary(dataLung$time))
 ```
 
 ## Modeling
-```{r}
-#ml <- BSWiMS.model(Surv(time,status)~1,data=dataLung,loops=20,NumberofRepeats = 10)
-dataLungR <- dataLung
-dataLungR$time <- NULL
-ml <- BSWiMS.model(status~1,data=dataLungR,loops=20,NumberofRepeats = 10)
-
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataLung,loops=100,NumberofRepeats = 10)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
 
-```{r}
-op <- par(no.readonly = TRUE)
+## Cox Model Performance
 
-pre <- predict(ml,dataLung,type="prob")
-pp <- predictionStats_binary(cbind(dataLung$status,pre),plotname="LUNG")
-par(op)
+Here we evaluate the model using the RRPlot() function.
 
-rdata <- cbind(dataLung$status,pre)
-rrAnalysis1Y <- RRPlot(rdata,atProb=c(0.90),
-                     timetoEvent=dataLung$time/365,
-                     title="Lung",
+### The evaluation of the raw Cox model with RRPlot()
+
+Here we will use the predicted event probability assuming a baseline hazard for events withing 5 years
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+index <- predict(ml,dataLung)
+timeinterval <- 1 # One year
+
+h0 <- sum(dataLung$status & dataLung$time < timeinterval)
+h0 <- h0/nrow(subset(dataLung,time > timeinterval | status==1))
+
+rdata <- cbind(dataLung$status,ppoisGzero(index,h0))
+
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=dataLung$time,
+                     title="Raw Train: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
-                     riskTimeInterval=0.9)
-
+                     riskTimeInterval=timeinterval)
 
 ```
 
+As we can see the Observed probability as well as the Time vs. Events are not calibrated.
+
+### Uncalibrated Performance Report
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+
+
+### Cox Calibration
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+op <- par(no.readonly = TRUE)
+
+
+calprob <- CoxRiskCalibration(ml,dataLung,"status","time")
+
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+```
+
+### The RRplot() of the calibrated model
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+h0 <- calprob$h0
+timeinterval <- calprob$timeInterval;
+
+rdata <- cbind(dataLung$status,calprob$prob)
+
+
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=dataLung$time,
+                     title="Train: FLC",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+```
+
+### Calibrated Train Performance
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```

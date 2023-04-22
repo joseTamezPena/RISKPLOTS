@@ -29,14 +29,6 @@ This document will use the survival::rotterdam, and survival::gbsg data-sets to 
 
 Here are some sample plots returned by the evaluated functions:
 
-![](images/paste-20250661.png){width="281"}
-
-![](images/paste-410F38EB.png){width="278"}
-
-![](images/paste-41F5E9F1.png)
-
-![](images/paste-79F43E17.png)
-
 ## The libraries
 
 ```{r}
@@ -153,15 +145,15 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
 
 As we can see the Observed probability as well as the Time vs. Events are not calibrated.
 
-### Analyzing RRPlot() outputs
+### Uncalibrated Performance Report
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
@@ -175,6 +167,8 @@ op <- par(no.readonly = TRUE)
 
 
 calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time")
+calprob$Ahazard
+calprob$meaninterval
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -200,15 +194,15 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
 
 ```
 
-### Analyzing RRPlot() outputs of the calibrated model
+### Calibrated Train Performance
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
@@ -236,14 +230,14 @@ par(op)
 
 ```
 
-### The Evaluation results of validation data set
+### External Data Report
 
 ```{r results = "asis"}
 pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysis$sufdif,caption="Logrank test")
@@ -255,6 +249,12 @@ pander::pander(rrAnalysis$sufdif,caption="Logrank test")
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 calprob <- CoxRiskCalibration(ml,dataBrestCancerTest,"status","time")
+calprob$Ahazard
+
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
 
 rdata <- cbind(dataBrestCancerTest$status,calprob$prob)
 
@@ -266,15 +266,15 @@ rrAnalysis <- RRPlot(rdata,atProb=c(0.90,0.80),
 
 ```
 
-### The Evaluation results of calibrated model on test data set
+### After Calibration Report
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysis$sufdif,caption="Logrank test")
@@ -293,10 +293,11 @@ dataBrestCancerR <- subset(dataBrestCancerTrain, time>=5 | status==1)
 dataBrestCancerR$status <- dataBrestCancerR$status * (dataBrestCancerR$time < 5)
 dataBrestCancerR$time <- NULL
 
+#ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=20,NumberofRepeats = 5)
 ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=0)
-
 sm <- summary(ml)
 pander::pander(sm$coefficients)
+
 
 ```
 
@@ -305,8 +306,10 @@ pander::pander(sm$coefficients)
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 op <- par(no.readonly = TRUE)
 
-## No-calibrated
-rdata <- cbind(dataBrestCancerTrain$status,predict(ml,dataBrestCancerTrain))
+
+cprob <- predict(ml,dataBrestCancerTrain)
+
+rdata <- cbind(dataBrestCancerTrain$status,cprob)
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Logistic Train: Breast Cancer",
@@ -318,15 +321,15 @@ par(op)
 
 ```
 
-### The Evaluaiton of the training
+### Training Report
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
@@ -349,15 +352,15 @@ par(op)
 
 ```
 
-### The evaluation of the validation
+### Validation Report
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysis$sufdif,caption="Logrank test")
@@ -370,6 +373,11 @@ pander::pander(rrAnalysis$sufdif,caption="Logrank test")
 
 riskdata <- cbind(dataBrestCancerTrain$status,predict(ml,dataBrestCancerTrain),dataBrestCancerTrain$time)
 calprob <- CalibrationProbPoissonRisk(riskdata)
+
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Logistic Calibration Parameters")
 
 timeinterval <- calprob$timeInterval;
 gain <- calprob$hazardGain
@@ -389,15 +397,15 @@ par(op)
 
 ```
 
-### The Evaluaiton of the calibrated logistic: training
+### Report of the calibrated logistic: training
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
@@ -417,15 +425,15 @@ rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
 
 ```
 
-### The evaluation of the calibrated validation
+### Report of the calibrated validation
 
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysis$sufdif,caption="Logrank test")

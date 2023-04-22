@@ -19,82 +19,168 @@ source("~/GitHub/FRESA.CAD/R/RRPlot.R")
 
 
 ```
+# RRPLOTS and flchain
 
 ```{r}
 odata <- flchain
 odata$chapter <- NULL
 table(odata$death)
 rownames(odata) <- c(1:nrow(odata))
-data <- as.data.frame(model.matrix(Surv(futime,death)~.,odata))
+data <- as.data.frame(model.matrix(Surv(futime,death)~.*.,odata))
 
 data$`(Intercept)` <- NULL
 table(odata[rownames(data),"death"])
 
 dataFL <- cbind(time=odata[rownames(data),"futime"],status=odata[rownames(data),"death"],data)
 dataFL$time <- dataFL$time/365
-table(dataFL$status)
 colnames(dataFL) <-str_replace_all(colnames(dataFL)," ","")
 colnames(dataFL) <-str_replace_all(colnames(dataFL),"\\.","_")
+colnames(dataFL) <-str_replace_all(colnames(dataFL),":","_")
+colnames(dataFL) <-str_replace_all(colnames(dataFL),"-","_")
+colnames(dataFL) <-str_replace_all(colnames(dataFL),">","_")
 
 trainsamples <- sample(nrow(dataFL),2000)
 dataFLTrain <- dataFL[trainsamples,]
 dataFLTest <- dataFL[-trainsamples,]
+
+pander::pander(table(dataFLTrain$status))
+pander::pander(table(dataFLTest$status))
+
 ```
 
 ## Modeling
-```{r}
-ml <- BSWiMS.model(Surv(time,status)~1,data=dataFLTrain,loops=0,NumberofRepeats = 1)
-#dataFLR <- dataFLTrain
-#dataFLR$time <- NULL
-#ml <- BSWiMS.model(status~1,data=dataFLR,loops=0,NumberofRepeats = 1)
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataFLTrain,loops=1)
 
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
 
-```{r}
+
+## Cox Model Performance
+
+Here we evaluate the model using the RRPlot() function.
+
+### The evaluation of the raw Cox model with RRPlot()
+
+Here we will use the predicted event probability assuming a baseline hazard for events withing 5 years
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+index <- predict(ml,dataFLTrain)
+timeinterval <- 5 # Five years
+
+h0 <- sum(dataFLTrain$status & dataFLTrain$time < timeinterval)
+h0 <- h0/nrow(subset(dataFLTrain,time > timeinterval | status==1))
+
+rdata <- cbind(dataFLTrain$status,ppoisGzero(index,h0))
+
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=dataFLTrain$time,
+                     title="Raw Train: FLC",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+```
+
+As we can see the Observed probability as well as the Time vs. Events are not calibrated.
+
+### Uncalibrated Performance Report
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+
+### Cox Calibration
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 op <- par(no.readonly = TRUE)
 
-table(dataFLTrain$status)
-times <- subset(dataFLTrain,status==1)$time
-avgtime <- median(times)
-lammda <- 1.0/avgtime
-timeinterval <- 2.0*avgtime
-rate <- sum(dataFLTrain$status)/nrow(dataFLTrain)
-h0 <- 1.4*lammda
-pre <- predict(ml,dataFLTrain)
-summary(pre)
-pre <- h0*exp(pre)
-summary(pre)
-prob <- (1.0-exp(-pre))
-summary(prob)
 
-rdata <- cbind(dataFLTrain$status,pre)
-pp <- predictionStats_binary(rdata,plotname="free light chain")
-par(op)
+calprob <- CoxRiskCalibration(ml,dataFLTrain,"status","time")
 
-rdata <- cbind(dataFLTrain$status,prob)
-rrAnalysis1Y <- RRPlot(rdata,atProb=c(0.90),
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+```
+
+### The RRplot() of the calibrated model
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+h0 <- calprob$h0
+timeinterval <- calprob$timeInterval;
+
+rdata <- cbind(dataFLTrain$status,calprob$prob)
+
+
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataFLTrain$time,
-                     title="Serum: FLC",
+                     title="Train: FLC",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
+```
 
-pre <- predict(ml,dataFLTest)
-pre <- h0*exp(pre)
-prob <- (1.0-exp(-pre))
+### Calibrated Train Performance
 
-rdata <- cbind(dataFLTest$status,pre)
-pp <- predictionStats_binary(rdata,plotname="free light chain")
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+
+## Performance on the test data set
+
+```{r results = "asis", warning = FALSE, dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+index <- predict(ml,dataFLTest)
+pp <- predictionStats_binary(cbind(dataFLTest$status,index),plotname="FLC")
 par(op)
 
+
+prob <- ppoisGzero(index,h0)
 rdata <- cbind(dataFLTest$status,prob)
-rrAnalysis1Y <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataFLTest$time,
-                     title="Serum: FLC",
+                     title="Test: FLC",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
+
+par(op)
+
+```
+
+### External Data Report
+
+```{r results = "asis"}
+pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysis$sufdif,caption="Logrank test")
 
 ```
 
