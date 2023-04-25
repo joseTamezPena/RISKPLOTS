@@ -38,7 +38,7 @@ pander::pander(summary(dataLung$time))
 
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-ml <- BSWiMS.model(Surv(time,status)~1,data=dataLung,loops=100,NumberofRepeats = 10)
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataLung,NumberofRepeats = 10)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
@@ -53,15 +53,17 @@ Here we will use the predicted event probability assuming a baseline hazard for 
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-index <- predict(ml,dataLung)
-timeinterval <- 1 # One year
+timeinterval <- 2*mean(subset(dataLung,status==1)$time)
 
-h0 <- sum(dataLung$status & dataLung$time < timeinterval)
-h0 <- h0/nrow(subset(dataLung,time > timeinterval | status==1))
+h0 <- sum(dataLung$status & dataLung$time <= timeinterval)
+h0 <- h0/sum((dataLung$time > timeinterval) | (dataLung$status==1))
+pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters")
+
+index <- predict(ml,dataLung)
 
 rdata <- cbind(dataLung$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
                      timetoEvent=dataLung$time,
                      title="Raw Train: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -76,7 +78,9 @@ As we can see the Observed probability as well as the Time vs. Events are not ca
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
@@ -112,9 +116,9 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataLung$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
                      timetoEvent=dataLung$time,
-                     title="Train: FLC",
+                     title="Train: Lung",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
@@ -125,12 +129,108 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```
+
+
+
+## Cross-Validation 
+
+```{r}
+
+rcv <- randomCV(theData=dataLung,
+                theOutcome = Surv(time,status)~1,
+                fittingFunction=BSWiMS.model, 
+                trainFraction = 0.95,
+                repetitions=200,
+                classSamplingType = "Pro"
+         )
+
+
+stp <- rcv$survTestPredictions
+stp <- stp[!is.na(stp[,4]),]
+
+bbx <- boxplot(unlist(stp[,1])~rownames(stp),plot=FALSE)
+times <- bbx$stats[3,]
+status <- boxplot(unlist(stp[,2])~rownames(stp),plot=FALSE)$stats[3,]
+prob <- ppoisGzero(boxplot(unlist(stp[,4])~rownames(stp),plot=FALSE)$stats[3,],h0)
+
+rdatacv <- cbind(status,prob)
+rownames(rdatacv) <- bbx$names
+names(times) <- bbx$names
+
+rrAnalysisTest <- RRPlot(rdatacv,atProb=c(0.90),
+                     timetoEvent=times,
+                     title="Test: Lung Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+```
+
+###  Cross-Validation Test Performance
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTest$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTest$c.index$cstatCI,caption="C. Index")
+pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+
+```
+
+
+### Calibrating the test results
+
+```{r}
+rdatacv <- cbind(status,prob,times)
+calprob <- CalibrationProbPoissonRisk(rdatacv)
+
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+timeinterval <- calprob$timeInterval;
+
+rdata <- cbind(status,calprob$prob)
+
+
+rrAnalysisTest <- RRPlot(rdata,atProb=c(0.90),
+                     timetoEvent=times,
+                     title="Calibrated Test: Lung",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+```
+
+### Calibrated Test Performance
+
+```{r results = "asis"}
+
+pander::pander(t(rrAnalysisTest$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTest$c.index$cstatCI,caption="C. Index")
+pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
 
 ```

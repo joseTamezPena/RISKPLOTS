@@ -45,7 +45,7 @@ pander::panderOptions('keep.trailing.zeros',TRUE)
 
 ## Breast Cancer Royston-Altman data
 
-### survival::rotterdam conditioning
+### data(gbsg, package="survival") and data(rotterdam, package="survival")
 
 ```{r results = "asis"}
 gbsgdata <- gbsg
@@ -85,7 +85,7 @@ pander::pander(table(odata[rownames(data),"status"]),caption="rotterdam")
 
 ```
 
-### The survival::gbsg data conditioning
+### data(gbsg, package="survival") data conditioning
 
 ```{r results = "asis"}
 
@@ -127,19 +127,22 @@ Here we will use the predicted event probability assuming a baseline hazard for 
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-index <- predict(ml,dataBrestCancerTrain)
 timeinterval <- 5 # Five years
 
-h0 <- sum(dataBrestCancerTrain$status & dataBrestCancerTrain$time < timeinterval)
-h0 <- h0/nrow(subset(dataBrestCancerTrain,time > timeinterval | status==1))
+h0 <- sum(dataBrestCancerTrain$status & dataBrestCancerTrain$time <= timeinterval)
+h0 <- h0/sum((dataBrestCancerTrain$time > timeinterval) | (dataBrestCancerTrain$status==1))
 
+pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters")
+
+index <- predict(ml,dataBrestCancerTrain)
 rdata <- cbind(dataBrestCancerTrain$status,ppoisGzero(index,h0))
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
-                     title="Raw Train: Breast Cancer",
+                     title="Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
+
 
 ```
 
@@ -150,7 +153,9 @@ As we can see the Observed probability as well as the Time vs. Events are not ca
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
@@ -167,8 +172,7 @@ op <- par(no.readonly = TRUE)
 
 
 calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time")
-calprob$Ahazard
-calprob$meaninterval
+
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -188,7 +192,7 @@ rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
-                     title="Train: Breast Cancer",
+                     title="Cal. Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
@@ -199,7 +203,9 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
@@ -249,7 +255,6 @@ pander::pander(rrAnalysis$sufdif,caption="Logrank test")
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 calprob <- CoxRiskCalibration(ml,dataBrestCancerTest,"status","time")
-calprob$Ahazard
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -260,7 +265,7 @@ rdata <- cbind(dataBrestCancerTest$status,calprob$prob)
 
 rrAnalysis <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTest$time,
-                     title="Recalibrated Test: Breast Cancer",
+                     title="Cal. Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=calprob$timeInterval)
 
@@ -372,7 +377,7 @@ pander::pander(rrAnalysis$sufdif,caption="Logrank test")
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 riskdata <- cbind(dataBrestCancerTrain$status,predict(ml,dataBrestCancerTrain),dataBrestCancerTrain$time)
-calprob <- CalibrationProbPoissonRisk(riskdata)
+calprob <- CalibrationProbPoissonRisk(riskdata,trim=0.15)
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -387,7 +392,7 @@ rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
-                     title="Adj Logistic Train: Breast Cancer",
+                     title="Cal. Logistic Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
@@ -419,7 +424,7 @@ aprob <- adjustProb(probLog,gain)
 rdata <- cbind(dataBrestCancerTest$status,aprob)
 rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataBrestCancerTest$time,
-                     title="Adj Logistic Test: Breast Cancer",
+                     title="Cal. Logistic Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 

@@ -67,12 +67,14 @@ Here we will use the predicted event probability assuming a baseline hazard for 
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
+timeinterval <- mean(subset(dataFLTrain,status==1)$time)
+
+h0 <- sum(dataFLTrain$status & dataFLTrain$time <= timeinterval)
+h0 <- h0/sum((dataFLTrain$time > timeinterval) | (dataFLTrain$status==1))
+
+pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters")
+
 index <- predict(ml,dataFLTrain)
-timeinterval <- 5 # Five years
-
-h0 <- sum(dataFLTrain$status & dataFLTrain$time < timeinterval)
-h0 <- h0/nrow(subset(dataFLTrain,time > timeinterval | status==1))
-
 rdata <- cbind(dataFLTrain$status,ppoisGzero(index,h0))
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
@@ -90,7 +92,10 @@ As we can see the Observed probability as well as the Time vs. Events are not ca
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$c.index$cstatCI),caption="C. Index")
+#pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
@@ -127,7 +132,7 @@ rdata <- cbind(dataFLTrain$status,calprob$prob)
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataFLTrain$time,
-                     title="Train: FLC",
+                     title="Calibrated Train: FLC",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
@@ -138,7 +143,10 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$c.index$cstatCI),caption="C. Index")
+#pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
@@ -174,7 +182,10 @@ par(op)
 
 ```{r results = "asis"}
 pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrAnalysis$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysis$c.index$cstatCI),caption="C. Index")
+#pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
