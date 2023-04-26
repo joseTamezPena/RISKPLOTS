@@ -112,7 +112,7 @@ pander::pander(table(odata[rownames(data),"status"]), caption="gbsg")
 
 ```{r results = "asis"}
 
-ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,loops=0)
+ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,loops=1,NumberofRepeats = 5)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
@@ -226,7 +226,7 @@ par(op)
 
 prob <- ppoisGzero(index,h0)
 rdata <- cbind(dataBrestCancerTest$status,prob)
-rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
+rrCoxTestAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataBrestCancerTest$time,
                      title="Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -239,14 +239,14 @@ par(op)
 ### External Data Report
 
 ```{r results = "asis"}
-pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
-pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+pander::pander(t(rrCoxTestAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(rrCoxTestAnalysis$c.index,caption="C. Index")
+pander::pander(t(rrCoxTestAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrCoxTestAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrCoxTestAnalysis$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrCoxTestAnalysis$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrCoxTestAnalysis$RR_atP),caption="Risk Ratio")
+pander::pander(rrCoxTestAnalysis$sufdif,caption="Logrank test")
 
 ```
 
@@ -299,8 +299,8 @@ dataBrestCancerR$status <- dataBrestCancerR$status * (dataBrestCancerR$time < 5)
 dataBrestCancerR$time <- NULL
 
 #ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=20,NumberofRepeats = 5)
-ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=0)
-sm <- summary(ml)
+mlog <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=1,NumberofRepeats = 5)
+sm <- summary(mlog)
 pander::pander(sm$coefficients)
 
 
@@ -312,7 +312,7 @@ pander::pander(sm$coefficients)
 op <- par(no.readonly = TRUE)
 
 
-cprob <- predict(ml,dataBrestCancerTrain)
+cprob <- predict(mlog,dataBrestCancerTrain)
 
 rdata <- cbind(dataBrestCancerTrain$status,cprob)
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
@@ -344,7 +344,7 @@ pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
 ### Results on the validation set using Logistic model
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-pre <- predict(ml,dataBrestCancerTest)
+pre <- predict(mlog,dataBrestCancerTest)
 rdata <- cbind(dataBrestCancerTest$status,pre)
 
 rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
@@ -376,8 +376,8 @@ pander::pander(rrAnalysis$sufdif,caption="Logrank test")
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-riskdata <- cbind(dataBrestCancerTrain$status,predict(ml,dataBrestCancerTrain),dataBrestCancerTrain$time)
-calprob <- CalibrationProbPoissonRisk(riskdata,trim=0.15)
+riskdata <- cbind(dataBrestCancerTrain$status,predict(mlog,dataBrestCancerTrain,type="prob"),dataBrestCancerTrain$time)
+calprob <- CalibrationProbPoissonRisk(riskdata)
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -418,15 +418,16 @@ pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
 ```
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-probLog <- predict(ml,dataBrestCancerTest)
+probLog <- predict(mlog,dataBrestCancerTest)
 aprob <- adjustProb(probLog,gain)
 
 rdata <- cbind(dataBrestCancerTest$status,aprob)
-rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
+rrAnalysisTestLogistic <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataBrestCancerTest$time,
                      title="Cal. Logistic Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
+par(op)
 
 ```
 
@@ -434,13 +435,98 @@ rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
-pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+pander::pander(t(rrAnalysisTestLogistic$OERatio),caption="O/E Ratio")
+pander::pander(rrAnalysisTestLogistic$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTestLogistic$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTestLogistic$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTestLogistic$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTestLogistic$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTestLogistic$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTestLogistic$sufdif,caption="Logrank test")
 
 ```
+
+## Comparing the COX and Logistic Models on the Independent Data
+
+```{r results = "asis", warning = FALSE , dpi=600, fig.height= 4.0, fig.width= 8.0}
+
+pander::pander(t(rrCoxTestAnalysis$OAcum95ci))
+pander::pander(t(rrAnalysisTestLogistic$OAcum95ci))
+
+pander::pander(t(rrCoxTestAnalysis$OE95ci))
+pander::pander(t(rrAnalysisTestLogistic$OE95ci))
+maxobs <- sum(dataBrestCancerTest$status)
+
+par(mfrow=c(1,2),cex=0.75)
+
+plot(rrCoxTestAnalysis$CumulativeOvs,type="l",lty=1,
+     main="Cumulative Probability",
+     xlab="Observed",
+     ylab="Cumulative Probability",
+     ylim=c(0,maxobs),
+     xlim=c(0,maxobs))
+lines(rrAnalysisTestLogistic$CumulativeOvs,lty=2,col="red")
+lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
+legend("topleft",legend = c("Cox","Logistic","Ideal"),
+       col=c("black","red","gray"),
+       lty=c(1,2,3),
+       cex=0.75
+)
+
+
+plot(rrCoxTestAnalysis$CumulativeOvs$Observed,
+     rrCoxTestAnalysis$CumulativeOvs$Cumulative-
+       rrCoxTestAnalysis$CumulativeOvs$Observed,
+     main="Cumulative Risk Difference",
+     xlab="Observed",
+     ylab="Cumulative Risk - Observed",
+     type="l",
+     lty=1)
+lines(rrAnalysisTestLogistic$CumulativeOvs$Observed,
+     rrAnalysisTestLogistic$CumulativeOvs$Cumulative-
+       rrAnalysisTestLogistic$CumulativeOvs$Observed,
+     lty=2,
+     col="red")
+legend("topleft",legend = c("Cox","Logistic"),
+       col=c("black","red"),
+       lty=c(1,2),
+       cex=0.75
+)
+
+plot(rrCoxTestAnalysis$OEData[,2:3],type="l",lty=1,
+     main="Expected over Time",
+     xlab="Observed",
+     ylab="Expected",
+     ylim=c(0,maxobs),
+     xlim=c(0,maxobs))
+lines(rrAnalysisTestLogistic$OEData[,2:3],lty=2,col="red")
+lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
+legend("topleft",legend = c("Cox","Logistic","Ideal"),
+       col=c("black","red","gray"),
+       lty=c(1,2,3),
+       cex=0.75
+)
+
+plot(rrCoxTestAnalysis$OEData$Observed,
+     rrCoxTestAnalysis$OEData$Expected-
+       rrCoxTestAnalysis$OEData$Observed,
+     main="Expected vs Observed Difference",
+     xlab="Observed",
+     ylab="Cumulative - Observed",
+     type="l",
+     lty=1)
+lines(rrAnalysisTestLogistic$OEData$Observed,
+     rrAnalysisTestLogistic$OEData$Expected-
+       rrAnalysisTestLogistic$OEData$Observed,
+     lty=2,col="red")
+
+legend("bottomleft",legend = c("Cox","Logistic"),
+       col=c("black","red"),
+       lty=c(1,2),
+       cex=0.75
+)
+
+par(op)
+
+```
+
