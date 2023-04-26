@@ -3,7 +3,11 @@ title: "Risk-Evaluation: Breast Cancer Royston-Altman"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
+    fig_crop: no
   html_document: default
 editor_options:
   chunk_output_type: console
@@ -42,6 +46,7 @@ op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
+layout(matrix(1:1, nrow=1))
 
 ```
 

@@ -1,0 +1,108 @@
+---
+title: 'Breast Cancer: Wisconsin'
+author: "Jose Tamez"
+date: '`r Sys.Date()`'
+output:
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    fig_crop: no
+    number_sections: yes
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(survival)
+library(FRESA.CAD)
+source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+op <- par(no.readonly = TRUE)
+pander::panderOptions('digits', 3)
+pander::panderOptions('table.split.table', 400)
+pander::panderOptions('keep.trailing.zeros',TRUE)
+layout(matrix(1:1, nrow=1))
+
+```
+
+```{r}
+
+
+dataBreast <- read.csv("~/GitHub/RISKPLOTS/DATA/wpbc.data", header=FALSE)
+table(dataBreast$V2)
+
+rownames(dataBreast) <- dataBreast$V1
+dataBreast$V1 <- NULL
+dataBreast$status <- 1*(dataBreast$V2=="R")
+dataBreast$V2 <- NULL
+dataBreast$time <- dataBreast$V3
+dataBreast$V3 <- NULL
+dataBreast <- sapply(dataBreast,as.numeric)
+dataBreast <- as.data.frame(dataBreast[complete.cases(dataBreast),])
+table(dataBreast$status)
+```
+
+## Modeling
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataBreast)
+sm <- summary(ml)
+pander::pander(sm$coefficients)
+
+
+```
+
+## Cox Model Performance
+
+Here we evaluate the model using the RRPlot() function.
+
+### The evaluation of the raw Cox model with RRPlot()
+
+Here we will use the predicted event probability assuming a baseline hazard for events withing 5 years
+
+```{r results = "asis", warning = FALSE , dpi=600, fig.height= 4.5, fig.width= 6.0}
+
+index <- predict(ml,dataBreast)
+timeinterval <- 2*mean(subset(dataBreast,status==1)$time)
+
+h0 <- sum(dataBreast$status & dataBreast$time <= timeinterval)
+h0 <- h0/sum((dataBreast$time > timeinterval) | (dataBreast$status==1))
+pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters")
+
+rdata <- cbind(dataBreast$status,ppoisGzero(index,h0))
+rownames(rdata) <- rownames(dataBreast)
+
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+                     timetoEvent=dataBreast$time,
+                     title="Raw Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+
+
+```
+
+As we can see the Observed probability as well as the Time vs. Events are not calibrated.
+
+### Uncalibrated Performance Report
+
+```{r results = "asis"}
+
+
+pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
+pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
+pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+
+```

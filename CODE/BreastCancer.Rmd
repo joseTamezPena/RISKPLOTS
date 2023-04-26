@@ -1,9 +1,11 @@
 ---
-title: "Breast Cancer: Wisconsin"
+title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
-date: "`r Sys.Date()`"
-output: html_document
-editor_options: 
+date: '`r Sys.Date()`'
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -17,6 +19,11 @@ library(survival)
 library(FRESA.CAD)
 source("~/GitHub/FRESA.CAD/R/RRPlot.R")
 source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+op <- par(no.readonly = TRUE)
+pander::panderOptions('digits', 3)
+pander::panderOptions('table.split.table', 400)
+pander::panderOptions('keep.trailing.zeros',TRUE)
+layout(matrix(1:1, nrow=1))
 
 ```
 
