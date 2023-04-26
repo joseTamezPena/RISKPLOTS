@@ -72,7 +72,9 @@ $$
 \lambda=-log[1.0-p(k>0)],
 $$
 
-and $$
+and
+
+$$
 \textrm{Expected #Events}=t \lambda /\Delta t,
 $$
 
