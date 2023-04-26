@@ -75,7 +75,7 @@ $$
 and
 
 $$
-\textrm{Expected #Events}=t \lambda /\Delta t,
+\textrm{Expected Events}=t \lambda /\Delta t,
 $$
 
 where $t$ is the actual time to event and $\Delta t$ is the time interval. Hence the function will accumulate all average events per time interval to estimate the number of observed events withing the provided times to event.
