@@ -32,16 +32,16 @@ The first was designed to calibrate the probabilities of a COX model, the second
 
 ## Usage
 
-```{\usage}
+``` {\usage}
   pinfo <- RRPlot(riskData=NULL,
-	timetoEvent=NULL,
-	riskTimeInterval=NULL,
-	ExpectedPrevalence=NULL,
-	atProb=c(0.90,0.80),
-	atThr=NULL,
-	title="",
-	ysurvlim=c(0,1.0)
-	)
+    timetoEvent=NULL,
+    riskTimeInterval=NULL,
+    ExpectedPrevalence=NULL,
+    atProb=c(0.90,0.80),
+    atThr=NULL,
+    title="",
+    ysurvlim=c(0,1.0)
+    )
 ```
 
 ### The Main Inputs
@@ -60,7 +60,9 @@ If the user models the risk by Cox modeling, then $\lambda$ is:
 
 $$
 \lambda= h_0e^{X \cdot \beta},
-$$where $h_0$ is the baseline hazard, $X$ are the risk factors, and $\beta$ the risk coefficients. Most of the times Cox models only return the prognosis index (PI), and PI=$X \cdot \beta$. The user must provide an estimation of the baseline hazard to estimate the probability of event for cox models. FRESA.CAD provides the function `ppoisGzero(index,h0)` to compute the probability of an event given the linear estimations returned by the Cox model.
+$$
+
+where $h_0$ is the baseline hazard, $X$ are the risk factors, and $\beta$ the risk coefficients. Most of the times Cox models only return the prognosis index (PI), and PI=$X \cdot \beta$. The user must provide an estimation of the baseline hazard to estimate the probability of event for cox models. FRESA.CAD provides the function `ppoisGzero(index,h0)` to compute the probability of an event given the linear estimations returned by the Cox model.
 
 `-timetoEvent`
 
@@ -70,7 +72,7 @@ $$
 \lambda=-log[1.0-p(k>0)],
 $$
 
-and$$
+and $$
 \textrm{Expected #Events}=t \lambda /\Delta t,
 $$
 
