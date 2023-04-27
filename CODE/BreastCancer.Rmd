@@ -3,8 +3,12 @@ title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
 date: '`r Sys.Date()`'
 output:
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    fig_crop: no
+    number_sections: yes
   html_document: default
-  pdf_document: default
 editor_options:
   chunk_output_type: console
 ---
@@ -99,7 +103,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -150,7 +154,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -201,7 +205,7 @@ pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```
 
@@ -242,7 +246,7 @@ pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```
 

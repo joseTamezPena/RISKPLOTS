@@ -25,7 +25,7 @@ This document highlights the use of
 
 -   CoxRiskCalibration(), and
 
--   CalibrationProbPoissonRisk,
+-   CalibrationProbPoissonRisk(),
 
 for the evaluation (RRPlot), and calibration of cox models (CoxRiskCalibration) or logistic models (CalibrationProbPoissonRisk) of survival data.
 
@@ -44,9 +44,8 @@ source("~/GitHub/FRESA.CAD/R/RRPlot.R")
 source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
-pander::panderOptions('table.split.table', 400)
+#pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
-layout(matrix(1:1, nrow=1))
 
 ```
 
@@ -168,7 +167,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -218,7 +217,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -253,7 +252,7 @@ pander::pander((rrCoxTestAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity"
 pander::pander((rrCoxTestAnalysis$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrCoxTestAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrCoxTestAnalysis$RR_atP),caption="Risk Ratio")
-pander::pander(rrCoxTestAnalysis$sufdif,caption="Logrank test")
+pander::pander(rrCoxTestAnalysis$surdif,caption="Logrank test")
 
 ```
 
@@ -289,7 +288,7 @@ pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+pander::pander(rrAnalysis$surdif,caption="Logrank test")
 
 ```
 
@@ -344,7 +343,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -375,7 +374,7 @@ pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysis$sufdif,caption="Logrank test")
+pander::pander(rrAnalysis$surdif,caption="Logrank test")
 
 ```
 
@@ -420,7 +419,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -449,7 +448,7 @@ pander::pander((rrAnalysisTestLogistic$ROCAnalysis$sensitivity),caption="Sensiti
 pander::pander((rrAnalysisTestLogistic$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTestLogistic$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTestLogistic$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTestLogistic$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTestLogistic$surdif,caption="Logrank test")
 
 ```
 

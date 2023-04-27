@@ -30,6 +30,24 @@ If the risk are not calibrated FRESA.CAD provides the following functions to adj
 
 The first was designed to calibrate the probabilities of a COX model, the second was designed to calibrate the probabilities of risk to future event in a given time interval. Both functions will return the baseline hazard that best describe the data as well as the best time interval required to match the rate of observed events. Hence `CalibrationProbPoissonRisk()` can be applied to any methodology that returns either the prognostic indexes, hazards ratios or the probability of event in a time interval.
 
+### Sample RMD code
+
+The CODE directory has the following files:
+
+-   `CODE/BreastCancerRoyAltman.Rmd`
+
+-   `CODE/BreastCancerShort.Rmd`
+
+-   `CODE/Colon.Rmd`
+
+-   `CODE/flchain.Rmd`
+
+-   `CODE/LungCancer.Rmd`
+
+-   `CODE/BreastCancer.Rmd`
+
+They provided sample scripts to estimate risk indexes as well as how to evaluate their behavior and how to calibrate them.
+
 ## Usage
 
 ``` {\usage}
@@ -53,13 +71,13 @@ The output is at: <https://rpubs.com/J_Tamez/RRPlotSurvival>
 
 `-riskData`
 
-The RRplots will assume that the input data (`riskData`) is a two column R data-frame. The first column will have the censoring information, i.e., {0: No event, 1: True event} The second column will have the probability of observing at least one event per time interval ($\Delta t$). Internally the function will assume that the Poisson distribution models the probability of observing k events. Hence:
+The RRplots will assume that the input data (`riskData`) is a two column R data-frame. The first column will have the censoring information, i.e., {0: No event, 1: True event} The second column will have the probability of observing at least one event in the time interval ($\Delta t$). Internally the function will assume that the Poisson distribution models the probability of observing k events. Hence:
 
 $$
 p(k>0)=1.0-e^{-\lambda},
 $$
 
-where $\lambda$ is the average number of events withing time interval, will estimate the probability of observing at least one event in the next time interval.
+where $\lambda$ is the average number of events withing time interval. $p(k>0)$ will estimate the probability of observing at least one event in the time interval.
 
 If the user models the risk by Cox modeling, then $\lambda$ is:
 
@@ -67,7 +85,7 @@ $$
 \lambda= h_0e^{X \cdot \beta},
 $$
 
-where $h_0$ is the baseline hazard, $X$ are the risk factors, and $\beta$ the risk coefficients. Most of the times Cox models only return the prognosis index (PI), and PI=$X \cdot \beta$. The user must provide an estimation of the baseline hazard to estimate the probability of event for cox models. FRESA.CAD provides the function `ppoisGzero(index,h0)` to compute the probability of an event given the linear estimations returned by the Cox model.
+where $h_0$ is the baseline hazard, $X$ is the vector of risk factors, and $\beta$ is the vector of risk coefficients. Most of the times Cox models only return the prognosis index (PI), and PI=$X \cdot \beta$. The user must provide an estimation of the baseline hazard to estimate the probability of event for cox models. FRESA.CAD provides the function `ppoisGzero(index,h0)` to compute the probability of an event given the linear estimations returned by the Cox model.
 
 `-timetoEvent`
 
@@ -91,11 +109,11 @@ To estimate the number of observed events in the spanned time provided by `timet
 
 `-atProb`
 
-This input parameter specifies the specificity required to automaticaly define the risk groups. The default values are: (0.9,0.8) that implies that the described threshold for high risk will only detect as false positives 10% of the at not risk subjects. The intermediate risk will be the next 10% of the subjects not at risk. The low risk category will include 80% of the subjects that did not have the event.
+This input parameter specifies the specificity required to automatically define the risk groups. The default values are: (0.9,0.8) that implies that the described threshold for high risk will only detect as false positives 10% of the at not risk subjects. The intermediate risk will be the next 10% of the subjects not at risk. The low risk category will include 80% of the subjects that did not have the event.
 
 `-atThr`
 
-This parameter defines the actual thresholds to define the at risk categories. The RRPlot() will not do nothing to estimate the risks.
+This parameter defines the actual thresholds to define the at risk categories.
 
 ### The Outputs
 
@@ -107,7 +125,7 @@ The `RRPlot()` will return the following six plots:
 
     This plot indicates that the risk probabilities are off and the observed events are happening at a higher rate than predicted.
 
-2.  Decision Curve Analysis: An indication of the power to make informed treatment benefit based on the returned probabilities.
+2.  Decision Curve Analysis: An indication of the power to make an informed treatment decision for each threshold value based on the provided probabilities.
 
     ![](images/paste-67156F85.png){width="318"}
 
@@ -143,6 +161,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
 -   <div>
 
+    The Observed/Expected Ratio using the last observation
+
         pinfo$OERatio
 
     </div>
@@ -153,6 +173,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 | 1.13 | 1.07  | 1.19      |
 
 -   <div>
+
+    The mean Observed/Expected Ratio computed using the 95% of the data.
 
         pinforrAnalysisTrain$OE95ci
 
@@ -165,6 +187,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
 -   <div>
 
+    The Observed/Accumulated probability ratio
+
         pinfo$OAcum95ci
 
     </div>
@@ -176,6 +200,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
 -   <div>
 
+    The C-Index
+
         pinfo$c.index$cstatCI
 
     </div>
@@ -185,6 +211,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 | 0.677        | 0.677  | 0.662 | 0.691 |
 
 -   <div>
+
+    The ROC AUC
 
         pinfo$ROCAnalysis$aucs
 
@@ -197,6 +225,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
 -   <div>
 
+    The Sensitivity
+
         pinfo$ROCAnalysis$sensitivity
 
     </div>
@@ -207,6 +237,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 | 0.3 | 0.277 | 0.324       |
 
 -   <div>
+
+    The Specificity
 
         pinfo$ROCAnalysis$specificity
 
@@ -219,6 +251,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
 -   <div>
 
+    The thresholds used to stratify the population into risk groups
+
         pinfo$thr_atP
 
     </div>
@@ -229,6 +263,8 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 | 0.457 | 0.386                  |
 
 -   <div>
+
+    The Risk Ratio between High-Risk and the rest
 
         pinfo$RR_atP
 
@@ -241,13 +277,143 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
 -   <div>
 
-        pinfo$sufdif
+    The Logrank test analysis via de survdif procedure
+
+        pinfo$surdif
 
     </div>
 
 |             |      |          |          |            | Logrank test Chisq = 479.123919 on 2 degrees of freedom, p = 0.000000 |
-|-------------|------|----------|----------|------------|-----------------------------------------------------------------------|
+|---------|---------|---------|---------|---------|------------------------------|
 |             | N    | Observed | Expected | (O-E)\^2/E | (O-E)\^2/V                                                            |
 | **class=0** | 1983 | 812      | 1145     | 96.7       | 398.2                                                                 |
 | **class=1** | 396  | 250      | 177      | 29.6       | 33.6                                                                  |
 | **class=2** | 603  | 456      | 196      | 345.4      | 401.8                                                                 |
+
+## Calibrating Risk Predictions
+
+FRESA.CAD provides two functions to calibrate risk probabilities.
+
+The first option is:
+
+    calprob <- CoxRiskCalibration(coxModel,dataset,"status","time")
+
+The `CoxRiskCalibration()` function takes a cox model to estimate the probabilities on the provided data set. The status parameter as the time parameters defines the columns that have the censoring status and the time to event information. At return the method provides the calibrated probabilities as well as the baseline hazard, and the time interval that best describe the observed events. This is the result of calibrating the original probabilities.
+
+    timeinterval <- calprob$timeInterval;
+    rdata <- cbind(data$status,calprob$prob)
+    rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                         timetoEvent=data$time,
+                         title="Cal. Logistic Train: Breast Cancer",
+                         ysurvlim=c(0.00,1.0),
+                         riskTimeInterval=timeinterval)
+
+![![](images/paste-3333E286.png)](images/paste-6EE76927.png)
+
+The second method takes the predicted probabilities
+
+    calprob <- CalibrationProbPoissonRisk(riskdata)
+
+where riskdata is:
+
+    riskdata <- cbind(data$status,predict(mlog,data),data$time)
+    calprob <- CalibrationProbPoissonRisk(riskdata)
+    timeinterval <- calprob$timeInterval;
+    rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
+
+
+    rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                         timetoEvent=data$time,
+                         title="Cal. Logistic Train: Breast Cancer",
+                         ysurvlim=c(0.00,1.0),
+                         riskTimeInterval=timeinterval)
+
+The predict function must return the probability of event.
+After calibration the returned probabilities should match the observed events.
+![](images/paste-A9DC722B.png)
+
+## ![](images/paste-95012748.png)
+Comparing the performance of two risk models
+
+You can compare two risk prob. The returned outputs of the RRPlot() function have the `CumulativeOvs`, and the `OEData` dataframes. These dataframes stored the Accumulated Observed Events as well as the Accumulated probability or Accumulated expected events. i.e.
+
+-   pinfo\$CumulativeOvs
+
+-   pinfo\$OEData
+
+Can be used to compared the risk probabilities of two models: Here is a sample code to compared the returned outputs of a Cox and Logistic models on data.
+
+    maxobs <- sum(dataBrestCancerTest$status)
+
+    par(mfrow=c(1,2),cex=0.75)
+
+    plot(rrCoxTestAnalysis$CumulativeOvs,type="l",lty=1,
+         main="Cumulative Probability",
+         xlab="Observed",
+         ylab="Cumulative Probability",
+         ylim=c(0,maxobs),
+         xlim=c(0,maxobs))
+    lines(rrAnalysisTestLogistic$CumulativeOvs,lty=2,col="red")
+    lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
+    legend("topleft",legend = c("Cox","Logistic","Ideal"),
+           col=c("black","red","gray"),
+           lty=c(1,2,3),
+           cex=0.75
+    )
+
+
+    plot(rrCoxTestAnalysis$CumulativeOvs$Observed,
+         rrCoxTestAnalysis$CumulativeOvs$Cumulative-
+           rrCoxTestAnalysis$CumulativeOvs$Observed,
+         main="Cumulative Risk Difference",
+         xlab="Observed",
+         ylab="Cumulative Risk - Observed",
+         type="l",
+         lty=1)
+    lines(rrAnalysisTestLogistic$CumulativeOvs$Observed,
+         rrAnalysisTestLogistic$CumulativeOvs$Cumulative-
+           rrAnalysisTestLogistic$CumulativeOvs$Observed,
+         lty=2,
+         col="red")
+    legend("topleft",legend = c("Cox","Logistic"),
+           col=c("black","red"),
+           lty=c(1,2),
+           cex=0.75
+    )
+
+![](images/paste-6E8DFC50.png)
+
+    plot(rrCoxTestAnalysis$OEData[,2:3],type="l",lty=1,
+         main="Expected over Time",
+         xlab="Observed",
+         ylab="Expected",
+         ylim=c(0,maxobs),
+         xlim=c(0,maxobs))
+    lines(rrAnalysisTestLogistic$OEData[,2:3],lty=2,col="red")
+    lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
+    legend("topleft",legend = c("Cox","Logistic","Ideal"),
+           col=c("black","red","gray"),
+           lty=c(1,2,3),
+           cex=0.75
+    )
+
+    plot(rrCoxTestAnalysis$OEData$Observed,
+         rrCoxTestAnalysis$OEData$Expected-
+           rrCoxTestAnalysis$OEData$Observed,
+         main="Expected vs Observed Difference",
+         xlab="Observed",
+         ylab="Cumulative - Observed",
+         type="l",
+         lty=1)
+    lines(rrAnalysisTestLogistic$OEData$Observed,
+         rrAnalysisTestLogistic$OEData$Expected-
+           rrAnalysisTestLogistic$OEData$Observed,
+         lty=2,col="red")
+
+    legend("bottomleft",legend = c("Cox","Logistic"),
+           col=c("black","red"),
+           lty=c(1,2),
+           cex=0.75
+    )
+
+![](images/paste-838F33F1.png)

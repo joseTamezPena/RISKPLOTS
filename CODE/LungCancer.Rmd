@@ -2,7 +2,12 @@
 title: "Lung Cancer"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    fig_crop: no
+    number_sections: yes
 editor_options: 
   chunk_output_type: console
 ---
@@ -17,6 +22,10 @@ library(FRESA.CAD)
 #library(corrplot)
 source("~/GitHub/FRESA.CAD/R/RRPlot.R")
 source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+op <- par(no.readonly = TRUE)
+pander::panderOptions('digits', 3)
+#pander::panderOptions('table.split.table', 400)
+pander::panderOptions('keep.trailing.zeros',TRUE)
 
 
 ```
@@ -86,7 +95,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -137,7 +146,7 @@ pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -189,7 +198,7 @@ pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```
 
@@ -231,6 +240,6 @@ pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
 pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```
