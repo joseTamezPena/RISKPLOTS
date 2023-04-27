@@ -284,7 +284,7 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
     </div>
 
 |             |      |          |          |            | Logrank test Chisq = 479.123919 on 2 degrees of freedom, p = 0.000000 |
-|---------|---------|---------|---------|---------|------------------------------|
+|-------------|------|----------|----------|------------|-----------------------------------------------------------------------|
 |             | N    | Observed | Expected | (O-E)\^2/E | (O-E)\^2/V                                                            |
 | **class=0** | 1983 | 812      | 1145     | 96.7       | 398.2                                                                 |
 | **class=1** | 396  | 250      | 177      | 29.6       | 33.6                                                                  |
@@ -328,11 +328,10 @@ where riskdata is:
                          ysurvlim=c(0.00,1.0),
                          riskTimeInterval=timeinterval)
 
-The predict function must return the probability of event.
-After calibration the returned probabilities should match the observed events.
-![](images/paste-A9DC722B.png)
+The predict function must return the probability of event. After calibration the returned probabilities should match the observed events. ![](images/paste-A9DC722B.png)
 
 ## ![](images/paste-95012748.png)
+
 Comparing the performance of two risk models
 
 You can compare two risk prob. The returned outputs of the RRPlot() function have the `CumulativeOvs`, and the `OEData` dataframes. These dataframes stored the Accumulated Observed Events as well as the Accumulated probability or Accumulated expected events. i.e.

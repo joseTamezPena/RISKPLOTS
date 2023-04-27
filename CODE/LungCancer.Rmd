@@ -32,18 +32,49 @@ pander::panderOptions('keep.trailing.zeros',TRUE)
 
 ```{r results = "asis"}
 
-
-data <- model.frame(Surv(time,status)~.*.,lung,na.action=NULL)
+data <- lung
+data <- data[complete.cases(data),]
+data$inst <- NULL
+time <- data$time
+data$time <- NULL
+status <- data$status - 1
+data <- as.data.frame(model.matrix(status~.*.,data,na.action=NULL))
+data$`(Intercept)` <- NULL
 colnames(data) <-str_replace_all(colnames(data),":","_")
 colnames(data) <-str_replace_all(colnames(data),"\\.","_")
 
-data$inst <- NULL
-data$`Surv(time, status)` <- NULL
-dataLung <- cbind(time=lung$time/365,status=lung$status-1,data)
-dataLung <- dataLung[complete.cases(dataLung),]
+dataLung <- cbind(time=time/365,status=status,data)
 pander::pander(table(dataLung$status))
 pander::pander(summary(dataLung$time))
 ```
+
+## Exploring Raw Features with RRPlot
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+topvar <- univariate_BinEnsemble(dataLung,"status",pvalue=0.05)
+pander::pander(topvar)
+topv <- min(5,length(topvar))
+topFive <- names(topvar)[1:topv]
+for (topf in topFive)
+{
+  ageRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),title=topf)
+}
+
+```
+
+## Exploring Survival of Features with RRPlot
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+for (topf in topFive)
+{
+  ageRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),
+                  timetoEvent=dataLung$time,
+                  atProb=0.90,
+                  title=topf)
+}
+
+```
+
 
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}

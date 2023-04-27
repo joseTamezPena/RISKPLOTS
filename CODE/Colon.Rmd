@@ -44,7 +44,6 @@ data <- colon
 data$time <- NULL
 data$study <- NULL
 table(data$status)
-#dataColon <- as.data.frame(model.matrix(status~.*.,data))
 dataColon <- as.data.frame(model.matrix(status~.*age,data))
 dataColon$`(Intercept)` <- NULL
 dataColon$time <- time/365
