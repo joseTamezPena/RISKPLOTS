@@ -40,8 +40,8 @@ Here are some sample plots returned by the evaluated functions:
 ```{r}
 library(survival)
 library(FRESA.CAD)
-source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+#source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+#source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 #pander::panderOptions('table.split.table', 400)

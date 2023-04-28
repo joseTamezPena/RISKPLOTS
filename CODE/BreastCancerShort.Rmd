@@ -3,14 +3,14 @@ title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
 date: '`r Sys.Date()`'
 output:
+  html_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     fig_crop: no
-    number_sections: yes
-  html_document: 
-    toc: yes
-    fig_caption: yes
     number_sections: yes
 editor_options:
   chunk_output_type: console
@@ -26,8 +26,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(survival)
 library(FRESA.CAD)
-source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+#source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+#source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 #pander::panderOptions('table.split.table', 400)
@@ -73,7 +73,7 @@ for (topf in topFive)
                               atProb=c(0.90),
                   timetoEvent=dataBreast$time,
                   title=topf,
-                  plotRR=FALSE
+#                  plotRR=FALSE
                   )
   idx <- idx + 1
 }

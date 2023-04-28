@@ -8,28 +8,31 @@ output:
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-  html_document: default
+  html_document: 
+    toc: yes
 editor_options:
   chunk_output_type: console
 ---
+# Wisconsin Prognosis
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+### Libraries
+
 ```{r}
 library(survival)
 library(FRESA.CAD)
-source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
-pander::panderOptions('table.split.table', 400)
+#pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
-layout(matrix(1:1, nrow=1))
 
 ```
+
+## The data
 
 ```{r}
 
@@ -162,7 +165,7 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 Here we use the estimated h0 and timeinterval from the full set
 
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 rcv <- randomCV(theData=dataBreast,
                 theOutcome = Surv(time,status)~1,
@@ -212,7 +215,7 @@ pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ### Calibrating the test results
 
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 rdatacv <- cbind(status,prob,times)
 calprob <- CalibrationProbPoissonRisk(rdatacv)
 

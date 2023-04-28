@@ -2,13 +2,16 @@
 title: "Lung Cancer"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
-output: 
-  pdf_document: 
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -16,69 +19,98 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Detailed Survival analyis of the Survival lung data.
+
+### Libraries
 ```{r}
 library(survival)
 library(FRESA.CAD)
-#library(corrplot)
-source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
-#pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
 
 
 ```
+### Libraries
 
 ```{r results = "asis"}
+data(lung)
+lung$inst <- NULL
+lung$status <- lung$status - 1
+lung <- lung[complete.cases(lung),]
 
-data <- lung
-data <- data[complete.cases(data),]
-data$inst <- NULL
-time <- data$time
-data$time <- NULL
-status <- data$status - 1
-data <- as.data.frame(model.matrix(status~.*.,data,na.action=NULL))
-data$`(Intercept)` <- NULL
-colnames(data) <-str_replace_all(colnames(data),":","_")
-colnames(data) <-str_replace_all(colnames(data),"\\.","_")
-
-dataLung <- cbind(time=time/365,status=status,data)
-pander::pander(table(dataLung$status))
-pander::pander(summary(dataLung$time))
+pander::pander(table(lung$status))
+pander::pander(summary(lung$time))
 ```
+
 
 ## Exploring Raw Features with RRPlot
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-topvar <- univariate_BinEnsemble(dataLung,"status",pvalue=0.05)
+convar <- colnames(lung)[lapply(apply(lung,2,unique),length) > 10]
+convar <- convar[convar != "time"]
+topvar <- univariate_BinEnsemble(lung[,c("status",convar)],"status")
 pander::pander(topvar)
 topv <- min(5,length(topvar))
 topFive <- names(topvar)[1:topv]
+RRanalysis <- list();
+idx <- 1
 for (topf in topFive)
 {
-  tmpRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),title=topf)
+  RRanalysis[[idx]] <- RRPlot(cbind(lung$status,lung[,topf]),
+                              atProb=c(0.90),
+                  timetoEvent=lung$time,
+                  title=topf,
+#                  plotRR=FALSE
+                  )
+  idx <- idx + 1
 }
-
+names(RRanalysis) <- topFive
 ```
 
-## Exploring Survival of Features with RRPlot
+## Reporting the Metrics
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+ROCAUC <- NULL
+CstatCI <- NULL
+RRatios <- NULL
+LogRangp <- NULL
+Sensitivity <- NULL
+Specificity <- NULL
+
 for (topf in topFive)
 {
-  tmpRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),
-                  timetoEvent=dataLung$time,
-                  atProb=0.90,
-                  title=topf)
+  CstatCI <- rbind(CstatCI,RRanalysis[[topf]]$c.index$cstatCI)
+  RRatios <- rbind(RRatios,RRanalysis[[topf]]$RR_atP)
+  LogRangp <- rbind(LogRangp,RRanalysis[[topf]]$surdif$pvalue)
+  Sensitivity <- rbind(Sensitivity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
+  Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
+  ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
 }
+rownames(CstatCI) <- topFive
+rownames(RRatios) <- topFive
+rownames(LogRangp) <- topFive
+rownames(Sensitivity) <- topFive
+rownames(Specificity) <- topFive
+rownames(ROCAUC) <- topFive
+
+pander::pander(ROCAUC)
+pander::pander(CstatCI)
+pander::pander(RRatios)
+pander::pander(LogRangp)
+pander::pander(Sensitivity)
+pander::pander(Specificity)
+
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1])
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR")
+pander::pander(meanMatrix)
 
 ```
 
 
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-ml <- BSWiMS.model(Surv(time,status)~1,data=dataLung,NumberofRepeats = 10)
+ml <- BSWiMS.model(Surv(time,status)~1,data=lung,NumberofRepeats = 10)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
@@ -93,18 +125,18 @@ Here we will use the predicted event probability assuming a baseline hazard for 
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timeinterval <- 2*mean(subset(dataLung,status==1)$time)
+timeinterval <- 2*mean(subset(lung,status==1)$time)
 
-h0 <- sum(dataLung$status & dataLung$time <= timeinterval)
-h0 <- h0/sum((dataLung$time > timeinterval) | (dataLung$status==1))
+h0 <- sum(lung$status & lung$time <= timeinterval)
+h0 <- h0/sum((lung$time > timeinterval) | (lung$status==1))
 pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters")
 
-index <- predict(ml,dataLung)
+index <- predict(ml,lung)
 
-rdata <- cbind(dataLung$status,ppoisGzero(index,h0))
+rdata <- cbind(lung$status,ppoisGzero(index,h0))
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
-                     timetoEvent=dataLung$time,
+                     timetoEvent=lung$time,
                      title="Raw Train: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
@@ -131,14 +163,13 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 ```
 
 
-
 ### Cox Calibration
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 op <- par(no.readonly = TRUE)
 
 
-calprob <- CoxRiskCalibration(ml,dataLung,"status","time")
+calprob <- CoxRiskCalibration(ml,lung,"status","time")
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -153,11 +184,11 @@ pander::pander(c(h0=calprob$h0,
 h0 <- calprob$h0
 timeinterval <- calprob$timeInterval;
 
-rdata <- cbind(dataLung$status,calprob$prob)
+rdata <- cbind(lung$status,calprob$prob)
 
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
-                     timetoEvent=dataLung$time,
+                     timetoEvent=lung$time,
                      title="Train: Lung",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
@@ -185,9 +216,9 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ## Cross-Validation 
 
-```{r}
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-rcv <- randomCV(theData=dataLung,
+rcv <- randomCV(theData=lung,
                 theOutcome = Surv(time,status)~1,
                 fittingFunction=BSWiMS.model, 
                 trainFraction = 0.95,
@@ -236,7 +267,7 @@ pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ### Calibrating the test results
 
-```{r}
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 rdatacv <- cbind(status,prob,times)
 calprob <- CalibrationProbPoissonRisk(rdatacv)
 
