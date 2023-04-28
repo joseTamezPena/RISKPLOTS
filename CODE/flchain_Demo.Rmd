@@ -1,14 +1,17 @@
 ---
-title: "fflchain: RRPlot Demo"
+title: 'fflchain: RRPlot Demo'
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
-output: 
-  pdf_document: 
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -57,46 +60,61 @@ topFive <- names(topvar)[1:topv]
 
 topFeature <- RRPlot(cbind(dataFL$status,dataFL[,topFive[1]]),
                   title=topFive[1])
+  par(op)
 
 ## With Survival Analysis
 RRanalysis <- list();
 idx <- 1
 for (topf in topFive)
 {
-  par(op)
   RRanalysis[[idx]] <- RRPlot(cbind(dataFL$status,dataFL[,topf]),
                   timetoEvent=dataFL$time,
                   atProb=c(0.90,0.80),
                   title=topf)
   idx <- idx + 1
+  par(op)
 }
 names(RRanalysis) <- topFive
 ```
 
+
 ## Reporting the Metrics
 
-```{r}
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+ROCAUC <- NULL
 CstatCI <- NULL
 RRatios <- NULL
 LogRangp <- NULL
-Sensitvity <- NULL
+Sensitivity <- NULL
+Specificity <- NULL
 
 for (topf in topFive)
 {
   CstatCI <- rbind(CstatCI,RRanalysis[[topf]]$c.index$cstatCI)
   RRatios <- rbind(RRatios,RRanalysis[[topf]]$RR_atP)
   LogRangp <- rbind(LogRangp,RRanalysis[[topf]]$surdif$pvalue)
-  Sensitvity <- rbind(Sensitvity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
+  Sensitivity <- rbind(Sensitivity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
+  Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
+  ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
 }
 rownames(CstatCI) <- topFive
 rownames(RRatios) <- topFive
 rownames(LogRangp) <- topFive
-rownames(Sensitvity) <- topFive
+rownames(Sensitivity) <- topFive
+rownames(Specificity) <- topFive
+rownames(ROCAUC) <- topFive
 
+pander::pander(ROCAUC)
 pander::pander(CstatCI)
 pander::pander(RRatios)
 pander::pander(LogRangp)
-pander::pander(Sensitvity)
+pander::pander(Sensitivity)
+pander::pander(Specificity)
+
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1])
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR")
+pander::pander(meanMatrix)
 
 ```
+
 

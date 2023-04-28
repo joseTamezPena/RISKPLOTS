@@ -4,6 +4,14 @@ This repository showcase the use of the `FRESA.CAD::RRplots()` function for the 
 
 The function was build to answer the following questions:
 
+-   Which biomarker is useful for the prognosis of future events?
+
+    -   Can a continous biomarker can be used to stratify high-risk, low-risk populations?
+
+        -   What is the threshold that can achieve that stratification?
+
+    -   How does a High-Middle and low Risk survival curves behave?
+
 -   Are the probabilities of the risk to future events in a given time interval calibrated?
 
     -   Do the probability of event matches the observed events?

@@ -8,7 +8,10 @@ output:
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-  html_document: default
+  html_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -17,7 +20,9 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Showcasing RRPlots
 
+### Libraries
 ```{r}
 library(survival)
 library(FRESA.CAD)
@@ -30,6 +35,8 @@ pander::panderOptions('keep.trailing.zeros',TRUE)
 layout(matrix(1:1, nrow=1))
 
 ```
+
+### Wisconsin Data Set
 
 ```{r}
 
@@ -48,9 +55,74 @@ dataBreast <- as.data.frame(dataBreast[complete.cases(dataBreast),])
 table(dataBreast$status)
 ```
 
+
+## Exploring Raw Features with RRPlot
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+convar <- colnames(dataBreast)[lapply(apply(dataBreast,2,unique),length) > 10]
+convar <- convar[convar != "time"]
+topvar <- univariate_BinEnsemble(dataBreast[,c("status",convar)],"status")
+pander::pander(topvar)
+topv <- min(5,length(topvar))
+topFive <- names(topvar)[1:topv]
+RRanalysis <- list();
+idx <- 1
+for (topf in topFive)
+{
+  RRanalysis[[idx]] <- RRPlot(cbind(dataBreast$status,dataBreast[,topf]),
+                              atProb=c(0.90),
+                  timetoEvent=dataBreast$time,
+                  title=topf,
+                  plotRR=FALSE
+                  )
+  idx <- idx + 1
+}
+names(RRanalysis) <- topFive
+```
+
+## Reporting the Metrics
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+ROCAUC <- NULL
+CstatCI <- NULL
+RRatios <- NULL
+LogRangp <- NULL
+Sensitivity <- NULL
+Specificity <- NULL
+
+for (topf in topFive)
+{
+  CstatCI <- rbind(CstatCI,RRanalysis[[topf]]$c.index$cstatCI)
+  RRatios <- rbind(RRatios,RRanalysis[[topf]]$RR_atP)
+  LogRangp <- rbind(LogRangp,RRanalysis[[topf]]$surdif$pvalue)
+  Sensitivity <- rbind(Sensitivity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
+  Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
+  ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
+}
+rownames(CstatCI) <- topFive
+rownames(RRatios) <- topFive
+rownames(LogRangp) <- topFive
+rownames(Sensitivity) <- topFive
+rownames(Specificity) <- topFive
+rownames(ROCAUC) <- topFive
+
+pander::pander(ROCAUC)
+pander::pander(CstatCI)
+pander::pander(RRatios)
+pander::pander(LogRangp)
+pander::pander(Sensitivity)
+pander::pander(Specificity)
+
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1])
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR")
+pander::pander(meanMatrix)
+
+```
+
+
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-ml <- BSWiMS.model(Surv(time,status)~1,data=dataBreast)
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataBreast,NumberofRepeats = 10)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 
@@ -77,7 +149,7 @@ pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters
 rdata <- cbind(dataBreast$status,ppoisGzero(index,h0))
 rownames(rdata) <- rownames(dataBreast)
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
                      timetoEvent=dataBreast$time,
                      title="Raw Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -87,7 +159,6 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
 
 ```
 
-As we can see the Observed probability as well as the Time vs. Events are not calibrated.
 
 ### Uncalibrated Performance Report
 
