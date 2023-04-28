@@ -30,6 +30,14 @@ If the risk are not calibrated FRESA.CAD provides the following functions to adj
 
 The first was designed to calibrate the probabilities of a COX model, the second was designed to calibrate the probabilities of risk to future event in a given time interval. Both functions will return the baseline hazard that best describe the data as well as the best time interval required to match the rate of observed events. Hence `CalibrationProbPoissonRisk()` can be applied to any methodology that returns either the prognostic indexes, hazards ratios or the probability of event in a time interval.
 
+## Required Library
+
+RRPlots is implemented in FRESA.CAD. You can get the latest version from github:
+
+``` R
+install_github("joseTamezPena/FRESA.CAD")
+```
+
 ### Sample RMD code
 
 The CODE directory has the following files:
@@ -284,7 +292,7 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
     </div>
 
 |             |      |          |          |            | Logrank test Chisq = 479.123919 on 2 degrees of freedom, p = 0.000000 |
-|-------------|------|----------|----------|------------|-----------------------------------------------------------------------|
+|-----------|-----------|-----------|-----------|-----------|--------------------|
 |             | N    | Observed | Expected | (O-E)\^2/E | (O-E)\^2/V                                                            |
 | **class=0** | 1983 | 812      | 1145     | 96.7       | 398.2                                                                 |
 | **class=1** | 396  | 250      | 177      | 29.6       | 33.6                                                                  |

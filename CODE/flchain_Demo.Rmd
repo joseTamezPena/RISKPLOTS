@@ -1,0 +1,102 @@
+---
+title: "fflchain: RRPlot Demo"
+author: "Jose Tamez"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    fig_crop: no
+    number_sections: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(survival)
+library(FRESA.CAD)
+#library(corrplot)
+source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+op <- par(no.readonly = TRUE)
+pander::panderOptions('digits', 3)
+pander::panderOptions('keep.trailing.zeros',TRUE)
+
+
+```
+# RRPLOTS and flchain
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+odata <- flchain
+odata$chapter <- NULL
+pander::pander(table(odata$death))
+rownames(odata) <- c(1:nrow(odata))
+data <- as.data.frame(model.matrix(Surv(futime,death)~.,odata))
+
+data$`(Intercept)` <- NULL
+
+dataFL <- as.data.frame(cbind(time=odata[rownames(data),"futime"],
+                              status=odata[rownames(data),"death"],
+                              data))
+pander::pander(table(dataFL$status))
+
+```
+
+## Exploring Raw Features with RRPlot
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+convar <- colnames(dataFL)[lapply(apply(dataFL,2,unique),length) > 10]
+convar <- convar[convar != "time"]
+topvar <- univariate_BinEnsemble(dataFL[,c("status",convar)],"status")
+pander::pander(topvar)
+topv <- min(5,length(topvar))
+topFive <- names(topvar)[1:topv]
+
+topFeature <- RRPlot(cbind(dataFL$status,dataFL[,topFive[1]]),
+                  title=topFive[1])
+
+## With Survival Analysis
+RRanalysis <- list();
+idx <- 1
+for (topf in topFive)
+{
+  par(op)
+  RRanalysis[[idx]] <- RRPlot(cbind(dataFL$status,dataFL[,topf]),
+                  timetoEvent=dataFL$time,
+                  atProb=c(0.90,0.80),
+                  title=topf)
+  idx <- idx + 1
+}
+names(RRanalysis) <- topFive
+```
+
+## Reporting the Metrics
+
+```{r}
+CstatCI <- NULL
+RRatios <- NULL
+LogRangp <- NULL
+Sensitvity <- NULL
+
+for (topf in topFive)
+{
+  CstatCI <- rbind(CstatCI,RRanalysis[[topf]]$c.index$cstatCI)
+  RRatios <- rbind(RRatios,RRanalysis[[topf]]$RR_atP)
+  LogRangp <- rbind(LogRangp,RRanalysis[[topf]]$surdif$pvalue)
+  Sensitvity <- rbind(Sensitvity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
+}
+rownames(CstatCI) <- topFive
+rownames(RRatios) <- topFive
+rownames(LogRangp) <- topFive
+rownames(Sensitvity) <- topFive
+
+pander::pander(CstatCI)
+pander::pander(RRatios)
+pander::pander(LogRangp)
+pander::pander(Sensitvity)
+
+```
+

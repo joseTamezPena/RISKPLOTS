@@ -57,7 +57,7 @@ topv <- min(5,length(topvar))
 topFive <- names(topvar)[1:topv]
 for (topf in topFive)
 {
-  ageRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),title=topf)
+  tmpRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),title=topf)
 }
 
 ```
@@ -67,7 +67,7 @@ for (topf in topFive)
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 for (topf in topFive)
 {
-  ageRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),
+  tmpRR <- RRPlot(cbind(dataLung$status,dataLung[,topf]),
                   timetoEvent=dataLung$time,
                   atProb=0.90,
                   title=topf)
