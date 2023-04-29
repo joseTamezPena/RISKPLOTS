@@ -1,10 +1,10 @@
 # RISKPLOTS
 
-This repository showcase the use of the `FRESA.CAD::RRplots()` function for the evaluation, and extraction of high risk thresholds for risk indexes of Poisson events.
+This repository showcase the use of the `FRESA.CAD::RRplots()` function for the evaluation, and extraction of high risk thresholds for biomarkers, prognosis indexes and any other continuous variable associated with the risk of future events.
 
 The function was build to answer the following questions:
 
--   Which biomarker is useful for the prognosis of future events?
+-   Is a continuous biomarker useful for the prognosis of future events?
 
     -   Can a continous biomarker can be used to stratify high-risk, low-risk populations?
 
@@ -30,7 +30,7 @@ The function was build to answer the following questions:
 
     -   What is the level of significance?
 
-If the risk are not calibrated FRESA.CAD provides the following functions to adjust the index probabilities to match the observed rate of events.
+If the probability of risk are not well calibrated FRESA.CAD provides the following functions to adjust the index probabilities to match the observed rate of events.
 
 -   `FRESA.CAD::CoxRiskCalibration()`
 
