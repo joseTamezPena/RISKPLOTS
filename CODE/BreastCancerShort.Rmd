@@ -67,10 +67,11 @@ topv <- min(5,length(topvar))
 topFive <- names(topvar)[1:topv]
 RRanalysis <- list();
 idx <- 1
+topf <- topFive[1]
 for (topf in topFive)
 {
   RRanalysis[[idx]] <- RRPlot(cbind(dataBreast$status,dataBreast[,topf]),
-                              atProb=c(0.90),
+                              atProb=c(0.90,0.80),
                   timetoEvent=dataBreast$time,
                   title=topf,
 #                  plotRR=FALSE
@@ -78,17 +79,24 @@ for (topf in topFive)
   idx <- idx + 1
 }
 names(RRanalysis) <- topFive
+
 ```
 
 ## Reporting the Metrics
 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+pander::pander(RRanalysis[[1]]$keyPoints,caption=topFive[1])
+pander::pander(RRanalysis[[2]]$keyPoints,caption=topFive[2])
+
+RRanalysis[[2]]$keyPoints["@MAX_BACC",c("BACC","RR")]
+
 ROCAUC <- NULL
 CstatCI <- NULL
 RRatios <- NULL
 LogRangp <- NULL
 Sensitivity <- NULL
 Specificity <- NULL
+MAXBACC <- NULL
 
 for (topf in topFive)
 {
@@ -98,6 +106,7 @@ for (topf in topFive)
   Sensitivity <- rbind(Sensitivity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
   Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
   ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
+  MAXBACC <- rbind(MAXBACC,RRanalysis[[topf]]$keyPoints["@MAX_BACC",c("BACC")])
 }
 rownames(CstatCI) <- topFive
 rownames(RRatios) <- topFive
@@ -105,6 +114,7 @@ rownames(LogRangp) <- topFive
 rownames(Sensitivity) <- topFive
 rownames(Specificity) <- topFive
 rownames(ROCAUC) <- topFive
+rownames(MAXBACC) <- topFive
 
 pander::pander(ROCAUC)
 pander::pander(CstatCI)
@@ -112,9 +122,10 @@ pander::pander(RRatios)
 pander::pander(LogRangp)
 pander::pander(Sensitivity)
 pander::pander(Specificity)
+pander::pander(MAXBACC)
 
-meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1])
-colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR")
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1],MAXBACC)
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR","MAX_BACC")
 pander::pander(meanMatrix)
 
 ```
