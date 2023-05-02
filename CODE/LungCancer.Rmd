@@ -3,14 +3,14 @@ title: "Lung Cancer"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    toc: yes
-    df_print: paged
   pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
+  html_document:
+    toc: yes
+    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -149,9 +149,10 @@ As we can see the Observed probability as well as the Time vs. Events are not ca
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -199,9 +200,10 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -251,9 +253,10 @@ rrAnalysisTest <- RRPlot(rdatacv,atProb=c(0.90),
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTest$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTest$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTest$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTest$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -293,9 +296,10 @@ rrAnalysisTest <- RRPlot(rdata,atProb=c(0.90),
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTest$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTest$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTest$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTest$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")

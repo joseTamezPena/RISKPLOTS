@@ -90,7 +90,7 @@ rdata <- cbind(lungD$status,ppoisGzero(index,h0))
 
 rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
                           timetoEvent=lungD$time,
-                          title="Raw Train: lungD Cancer",
+                          title="Raw Train: lung Cancer",
                           ysurvlim=c(0.00,1.0),
                           riskTimeInterval=timeinterval)
 
@@ -98,9 +98,11 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
 ### Reporting Performance 
 
 
-print(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-print(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-print(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+print(rrAnalysisTrain$keyPoints,caption="Key Values")
+print(rrAnalysisTrain$OERatio,caption="O/E Test")
+print(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+print(rrAnalysisTrain$OARatio,caption="O/Acum Test")
+print(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 print(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 print(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 print((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")

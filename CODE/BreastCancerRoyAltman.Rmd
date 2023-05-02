@@ -161,9 +161,9 @@ As we can see the Observed probability as well as the Time vs. Events are not ca
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -212,9 +212,9 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -250,7 +250,7 @@ par(op)
 
 ```{r results = "asis"}
 pander::pander(t(rrCoxTestAnalysis$keyPoints),caption="Threshold values")
-pander::pander(t(rrCoxTestAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrCoxTestAnalysis$OERatio$estimate),caption="O/E Ratio")
 pander::pander(rrCoxTestAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrCoxTestAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrCoxTestAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -287,7 +287,7 @@ rrAnalysis <- RRPlot(rdata,atProb=c(0.90,0.80),
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysis$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$OERatio$estimate),caption="O/E Ratio")
 pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -343,7 +343,7 @@ par(op)
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
 pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -375,7 +375,7 @@ par(op)
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysis$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysis$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysis$OERatio$estimate),caption="O/E Ratio")
 pander::pander(rrAnalysis$c.index,caption="C. Index")
 pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -421,7 +421,7 @@ par(op)
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
 pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -451,7 +451,7 @@ par(op)
 ```{r results = "asis"}
 
 pander::pander(t(rrAnalysisTestLogistic$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTestLogistic$OERatio),caption="O/E Ratio")
+pander::pander(t(rrAnalysisTestLogistic$OERatio$estimate),caption="O/E Ratio")
 pander::pander(rrAnalysisTestLogistic$c.index,caption="C. Index")
 pander::pander(t(rrAnalysisTestLogistic$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTestLogistic$ROCAnalysis$sensitivity),caption="Sensitivity")
@@ -475,13 +475,13 @@ maxobs <- sum(dataBrestCancerTest$status)
 
 par(mfrow=c(1,2),cex=0.75)
 
-plot(rrCoxTestAnalysis$CumulativeOvs,type="l",lty=1,
+plot(rrCoxTestAnalysis$CumulativeOvs[,1:2],type="l",lty=1,
      main="Cumulative Probability",
      xlab="Observed",
      ylab="Cumulative Probability",
      ylim=c(0,maxobs),
      xlim=c(0,maxobs))
-lines(rrAnalysisTestLogistic$CumulativeOvs,lty=2,col="red")
+lines(rrAnalysisTestLogistic$CumulativeOvs[,1:2],lty=2,col="red")
 lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
 legend("topleft",legend = c("Cox","Logistic","Ideal"),
        col=c("black","red","gray"),
