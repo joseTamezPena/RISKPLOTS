@@ -159,7 +159,7 @@ The `RRPlot()` will return the following six plots:
 
 4.  Receiver Operative Characteristic (ROC): The behavior of the index as a prognosis of true future events vs. censored events (No events)
 
-    ![](images/paste-BEE2BF81.png){width="377"}
+    ![](images/paste-23BD5B56.png)
 
     This ROC plot highlights the behavior of the risk to separate the high-risk vs the low-risk group. The green line provides the behavior of the automatically computed threshold or the user provided threshold.
 
