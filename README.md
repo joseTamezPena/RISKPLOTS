@@ -4,31 +4,35 @@ This repository showcase the use of the `FRESA.CAD::RRplots()` function for the 
 
 The function was build to answer the following questions:
 
--   Is a continuous biomarker useful for the prognosis of future events?
+-   **Biomearkers**:
 
-    -   Can a continous biomarker can be used to stratify high-risk, low-risk populations?
+    -   Is a continuous biomarker useful for the prognosis of future events?
 
-        -   What is the threshold that can achieve that stratification?
+        -   Can a continous biomarker can be used to stratify high-risk, low-risk populations?
 
-    -   How does a High-Middle and low Risk survival curves behave?
+            -   What is the threshold that can achieve that stratification?
 
--   Are the probabilities of the risk to future events in a given time interval calibrated?
+        -   How does a High-Middle and low Risk survival curves behave?
 
-    -   Do the probability of event matches the observed events?
+-   **Risk probabilities and Risk Models**
 
-    -   What is the Decision Curve Analysis between censored and non censored events?
+    -   Are the probabilities of the risk to future events in a given time interval calibrated?
 
-    -   Do the observed events are occurring as predicted by the risk hazards?
+        -   Do the probability of event matches the observed events?
 
--   What are the threshold for identifying the high risk subjects?
+        -   What is the Decision Curve Analysis between censored and non censored events?
 
-    -   What is the Hazard ratios between High risk subjects and the other population?
+        -   Do the observed events are occurring as predicted by the risk hazards?
 
-    -   What is the ROC curve and its significance?
+    -   What are the threshold for identifying the high risk subjects?
 
--   Do the Kaplan-Meier plots are different between at risk stratified subjects?
+        -   What is the Hazard ratios between High risk subjects and the other population?
 
-    -   What is the level of significance?
+        -   What is the ROC curve and its significance?
+
+    -   Do the Kaplan-Meier plots are different between at risk stratified subjects?
+
+        -   What is the level of significance?
 
 If the probability of risk are not well calibrated FRESA.CAD provides the following functions to adjust the index probabilities to match the observed rate of events.
 
@@ -101,7 +105,7 @@ $$
 \lambda= h_0e^{X \cdot \beta},
 $$
 
-where $h_0$ is the baseline hazard, $X$ is the vector of risk factors, and $\beta$ is the vector of risk coefficients. Most of the times Cox models only return the prognosis index (PI), and PI=$X \cdot \beta$. The user must provide an estimation of the baseline hazard to estimate the probability of event for cox models. FRESA.CAD provides the function `ppoisGzero(index,h0)` to compute the probability of an event given the linear estimations returned by the Cox model.
+where $h_0$ is the baseline hazard, $X$ is the vector of risk factors, and $\beta$ is the vector of risk coefficients. Most of the times Cox models only return the prognosis index (PI), and PI= $X \cdot \beta$. The user must provide an estimation of the baseline hazard to estimate the probability of event for cox models. FRESA.CAD provides the function `ppoisGzero(index,h0)` to compute the probability of an event given the linear estimations returned by the Cox model.
 
 `-timetoEvent`
 
@@ -174,6 +178,27 @@ The `RRPlot()` will return the following six plots:
 ## The quantitative outputs
 
 The `RRPlots()` function returns several quantitative analysis of the risk probabilities. Some of them are:
+
+-   <div>
+
+    Key Threshold values:
+
+    pinfo\$keyPoints
+
+    </div>
+
+    Output:
+
+|          |        |        |            |          |          | hreshold values |
+|----------|--------|--------|------------|----------|----------|-----------------|
+|          | \@:0.9 | \@:0.8 | \@MAX_BACC | \@MAX_RR | \@SPE100 | p(0.5)          |
+| **Thr**  | 0.459  | 0.389  | 0.320      | 0.214    | 0.18549  | 0.500           |
+| **RR**   | 1.690  | 1.713  | 1.799      | 2.376    | 1.00000  | 1.725           |
+| **SEN**  | 0.299  | 0.462  | 0.644      | 0.965    | 1.00000  | 0.246           |
+| **SPE**  | 0.900  | 0.798  | 0.646      | 0.125    | 0.00137  | 0.931           |
+| **BACC** | 0.599  | 0.630  | 0.645      | 0.545    | 0.50068  | 0.589           |
+
+It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8). It also reports threshold values for the maximum balanced accuracy (\@MAX_BACC) at the maximum Risk Ratio (\@MAX_RR) and 100% Specificity (\@SPE100) and at p=0.5. (p(0.5))
 
 -   <div>
 
@@ -300,7 +325,7 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
     </div>
 
 |             |      |          |          |            | Logrank test Chisq = 479.123919 on 2 degrees of freedom, p = 0.000000 |
-|-------------|------|----------|----------|------------|-----------------------------------------------------------------------|
+|------------|------------|------------|------------|------------|------------|
 |             | N    | Observed | Expected | (O-E)\^2/E | (O-E)\^2/V                                                            |
 | **class=0** | 1983 | 812      | 1145     | 96.7       | 398.2                                                                 |
 | **class=1** | 396  | 250      | 177      | 29.6       | 33.6                                                                  |
