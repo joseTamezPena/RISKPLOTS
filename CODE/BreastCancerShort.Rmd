@@ -3,14 +3,14 @@ title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
 date: '`r Sys.Date()`'
 output:
+  html_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     fig_crop: no
-    number_sections: yes
-  html_document: 
-    toc: yes
-    fig_caption: yes
     number_sections: yes
 editor_options:
   chunk_output_type: console
@@ -92,7 +92,6 @@ RRanalysis[[2]]$keyPoints["@MAX_BACC",c("BACC","RR")]
 
 ROCAUC <- NULL
 CstatCI <- NULL
-RRatios <- NULL
 LogRangp <- NULL
 Sensitivity <- NULL
 Specificity <- NULL
@@ -101,7 +100,6 @@ MAXBACC <- NULL
 for (topf in topFive)
 {
   CstatCI <- rbind(CstatCI,RRanalysis[[topf]]$c.index$cstatCI)
-  RRatios <- rbind(RRatios,RRanalysis[[topf]]$RR_atP)
   LogRangp <- rbind(LogRangp,RRanalysis[[topf]]$surdif$pvalue)
   Sensitivity <- rbind(Sensitivity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
   Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
@@ -109,7 +107,6 @@ for (topf in topFive)
   MAXBACC <- rbind(MAXBACC,RRanalysis[[topf]]$keyPoints["@MAX_BACC",c("BACC")])
 }
 rownames(CstatCI) <- topFive
-rownames(RRatios) <- topFive
 rownames(LogRangp) <- topFive
 rownames(Sensitivity) <- topFive
 rownames(Specificity) <- topFive
@@ -118,14 +115,13 @@ rownames(MAXBACC) <- topFive
 
 pander::pander(ROCAUC)
 pander::pander(CstatCI)
-pander::pander(RRatios)
 pander::pander(LogRangp)
 pander::pander(Sensitivity)
 pander::pander(Specificity)
 pander::pander(MAXBACC)
 
-meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1],MAXBACC)
-colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR","MAX_BACC")
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],MAXBACC)
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","MAX_BACC")
 pander::pander(meanMatrix)
 
 ```
@@ -185,7 +181,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
