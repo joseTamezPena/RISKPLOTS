@@ -102,6 +102,19 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
 
 ```
 
+### Time to event 
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
+obstime <- dataColonTrain[rdata[,1]==1,"time"]
+
+plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
+
+MADerror <- mean(abs(timetoEvent-obstime))
+pander::pander(MADerror)
+
+```
 
 ### Uncalibrated Performance Report
 
@@ -152,6 +165,21 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      title="Calibrated Train: Colon",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
+
+```
+
+
+### Time to event after calibration
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
+obstime <- dataColonTrain[rdata[,1]==1,"time"]
+
+plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
+
+MADerror <- mean(abs(timetoEvent-obstime))
+pander::pander(MADerror)
 
 ```
 

@@ -3,14 +3,14 @@ title: 'fflchain: RRPlot Demo'
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    toc: yes
+    df_print: paged
   pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-  html_document:
-    toc: yes
-    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -100,7 +100,6 @@ for (topf in topFive)
   ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
 }
 rownames(CstatCI) <- topFive
-rownames(RRatios) <- topFive
 rownames(LogRangp) <- topFive
 rownames(Sensitivity) <- topFive
 rownames(Specificity) <- topFive
@@ -108,13 +107,12 @@ rownames(ROCAUC) <- topFive
 
 pander::pander(ROCAUC)
 pander::pander(CstatCI)
-pander::pander(RRatios)
 pander::pander(LogRangp)
 pander::pander(Sensitivity)
 pander::pander(Specificity)
 
-meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1])
-colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR")
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1])
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe")
 pander::pander(meanMatrix)
 
 ```

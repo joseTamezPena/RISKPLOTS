@@ -129,7 +129,7 @@ To estimate the number of observed events in the spanned time provided by `timet
 
 `-atRate`
 
-This input parameter specifies the (True Negative Rate (TNR o Specificity) or False Negative Rate (TNR or 1-Specificity) required to automatically define the risk groups. The default values are: (0.9,0.8) that implies that the described threshold for high risk will only FPR of 10% of the at not risk subjects. The intermediate risk will be the next 10% of the subjects not at risk. The low risk category will include 80% of the subjects that did not have the event. If the atRate values are lower than 0.5 The function will assume that the user is specifying the desired False Negative Rate (FNR or 1.0-specificity)
+This input parameter specifies the (True Negative Rate (TNR o Specificity) or False Negative Rate (TNR or 1-Specificity) required to automatically define the risk groups. The default values are: (0.9,0.8) that implies that the described threshold for high risk will only FPR of 10% of the at not risk subjects. The intermediate risk will be the next 10% of the subjects not at risk. The low risk category will include 80% of the subjects that did not have the event. If the `atRate` values are lower than 0.5 The function will assume that the user is specifying the desired False Negative Rate (FNR or 1.0-specificity)
 
 `-atThr`
 
@@ -161,7 +161,7 @@ The `RRPlot()` will return the following six plots:
 
     ![](images/paste-23BD5B56.png)
 
-    This ROC plot highlights the behavior of the risk to separate the high-risk vs the low-risk group. The green line provides the behavior of the automatically computed threshold or the user provided threshold.
+    This ROC plot highlights the behavior of the risk to separate the high-risk vs the low-risk group. The green line and the red dot highlight the location of the automatically computed threshold or the user provided threshold. The confusion matrix shows the performance at the desicion threshold.
 
 5.  Time vs. Events: Shows if the provided probability is calibrated to the observed events. It requires that the user provides an accurate estimation of the time interval.
 
@@ -189,16 +189,19 @@ The `RRPlots()` function returns several quantitative analysis of the risk proba
 
     Output:
 
-|          |        |        |            |          |          | hreshold values |
-|----------|--------|--------|------------|----------|----------|-----------------|
-|          | \@:0.9 | \@:0.8 | \@MAX_BACC | \@MAX_RR | \@SPE100 | p(0.5)          |
-| **Thr**  | 0.459  | 0.389  | 0.320      | 0.214    | 0.18549  | 0.500           |
-| **RR**   | 1.690  | 1.713  | 1.799      | 2.376    | 1.00000  | 1.725           |
-| **SEN**  | 0.299  | 0.462  | 0.644      | 0.965    | 1.00000  | 0.246           |
-| **SPE**  | 0.900  | 0.798  | 0.646      | 0.125    | 0.00137  | 0.931           |
-| **BACC** | 0.599  | 0.630  | 0.645      | 0.545    | 0.50068  | 0.589           |
+    |                |        |        |            |          |          |        |
+    |----------------|--------|--------|------------|----------|----------|--------|
+    |                | \@:0.9 | \@:0.8 | \@MAX_BACC | \@MAX_RR | \@SPE100 | p(0.5) |
+    | **Thr**        | 0.459  | 0.389  | 0.320      | 0.214    | 0.18549  | 0.4996 |
+    | **RR**         | 1.690  | 1.713  | 1.799      | 2.376    | 1.00000  | 1.7255 |
+    | **RR_LCI**     | 1.586  | 1.603  | 1.666      | 1.869    | 0.00000  | 1.6196 |
+    | **RR_UCI**     | 1.802  | 1.830  | 1.942      | 3.019    | 0.00000  | 1.8383 |
+    | **SEN**        | 0.299  | 0.462  | 0.644      | 0.965    | 1.00000  | 0.2464 |
+    | **SPE**        | 0.900  | 0.798  | 0.646      | 0.125    | 0.00137  | 0.9310 |
+    | **BACC**       | 0.599  | 0.630  | 0.645      | 0.545    | 0.50068  | 0.5887 |
+    | **NetBenefit** | 0.110  | 0.172  | 0.246      | 0.374    | 0.39742  | 0.0916 |
 
-It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8). It also reports threshold values for the maximum balanced accuracy (\@MAX_BACC) at the maximum Risk Ratio (\@MAX_RR) and 100% Specificity (\@SPE100) and at p=0.5. (p(0.5))
+It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8). It also reports threshold values for the maximum balanced accuracy (\@MAX_BACC) at the maximum Risk Ratio (\@MAX_RR) and 100% Specificity (\@SPE100) and at p=0.5. (p(0.5)). For each threshold the table reports the Risk Ratios (**RR**), the Lower 95% confidence interval (**RR_LCI**), the upper 95% Confidence interval (**RR_UCI**), the sensitivity (**SEN**), the specificity (**SPE**), the balanced accuracy (**BACC**) and the net benefit (**NetBenefit**)
 
 -   <div>
 

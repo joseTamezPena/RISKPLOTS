@@ -188,7 +188,7 @@ par(op)
 ```
 ## Expected time to event
 
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
 
@@ -261,7 +261,7 @@ par(op)
 
 ## Expected time to event
 
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
 
@@ -333,7 +333,7 @@ par(op)
 
 ## Expected time to event
 
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
 

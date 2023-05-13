@@ -3,14 +3,14 @@ title: "Lung Cancer"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    toc: yes
+    df_print: paged
   pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-  html_document:
-    toc: yes
-    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -73,7 +73,6 @@ names(RRanalysis) <- topFive
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 ROCAUC <- NULL
 CstatCI <- NULL
-RRatios <- NULL
 LogRangp <- NULL
 Sensitivity <- NULL
 Specificity <- NULL
@@ -81,14 +80,12 @@ Specificity <- NULL
 for (topf in topFive)
 {
   CstatCI <- rbind(CstatCI,RRanalysis[[topf]]$c.index$cstatCI)
-  RRatios <- rbind(RRatios,RRanalysis[[topf]]$RR_atP)
   LogRangp <- rbind(LogRangp,RRanalysis[[topf]]$surdif$pvalue)
   Sensitivity <- rbind(Sensitivity,RRanalysis[[topf]]$ROCAnalysis$sensitivity)
   Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
   ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
 }
 rownames(CstatCI) <- topFive
-rownames(RRatios) <- topFive
 rownames(LogRangp) <- topFive
 rownames(Sensitivity) <- topFive
 rownames(Specificity) <- topFive
@@ -96,13 +93,12 @@ rownames(ROCAUC) <- topFive
 
 pander::pander(ROCAUC)
 pander::pander(CstatCI)
-pander::pander(RRatios)
 pander::pander(LogRangp)
 pander::pander(Sensitivity)
 pander::pander(Specificity)
 
-meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],RRatios[,1])
-colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","RR")
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1])
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe")
 pander::pander(meanMatrix)
 
 ```
