@@ -3,14 +3,14 @@ title: "Lung Cancer"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    toc: yes
-    df_print: paged
   pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
+  html_document:
+    toc: yes
+    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -58,7 +58,7 @@ idx <- 1
 for (topf in topFive)
 {
   RRanalysis[[idx]] <- RRPlot(cbind(lung$status,lung[,topf]),
-                              atProb=c(0.90),
+                              atRate=c(0.90),
                   timetoEvent=lung$time,
                   title=topf,
 #                  plotRR=FALSE
@@ -135,7 +135,7 @@ index <- predict(ml,lung)
 
 rdata <- cbind(lung$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=lung$time,
                      title="Raw Train: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -188,7 +188,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(lung$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=lung$time,
                      title="Train: Lung",
                      ysurvlim=c(0.00,1.0),
@@ -241,7 +241,7 @@ rdatacv <- cbind(status,prob)
 rownames(rdatacv) <- bbx$names
 names(times) <- bbx$names
 
-rrAnalysisTest <- RRPlot(rdatacv,atProb=c(0.90),
+rrAnalysisTest <- RRPlot(rdatacv,atRate=c(0.90),
                      timetoEvent=times,
                      title="Test: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -284,7 +284,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(status,calprob$prob)
 
 
-rrAnalysisTest <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTest <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=times,
                      title="Calibrated Test: Lung",
                      ysurvlim=c(0.00,1.0),

@@ -3,14 +3,14 @@ title: "Colon Cancer"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  html_document: 
-    toc: yes
-    fig_caption: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
+  html_document: 
+    toc: yes
+    fig_caption: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -94,7 +94,7 @@ h0 <- h0/sum((dataColonTrain$time > timeinterval) | (dataColonTrain$status==1))
 
 rdata <- cbind(dataColonTrain$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=dataColonTrain$time,
                      title="Raw Train: Colon Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -147,7 +147,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataColonTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=dataColonTrain$time,
                      title="Calibrated Train: Colon",
                      ysurvlim=c(0.00,1.0),

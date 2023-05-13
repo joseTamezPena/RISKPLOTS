@@ -76,7 +76,7 @@ They provided sample scripts to estimate risk indexes as well as how to evaluate
     timetoEvent=timesToEvent,
     riskTimeInterval=1,
     ExpectedPrevalence=NULL,
-    atProb=c(0.90,0.80),
+    atRate=c(0.90,0.80),
     atThr=NULL,
     title="Dummy",
     ysurvlim=c(0,1.0)
@@ -127,9 +127,9 @@ where $t$ is the actual time to event and $\Delta t$ is the time interval. Hence
 
 To estimate the number of observed events in the spanned time provided by `timetoEvent` vector. All the observed times are divided by the user provided information in the `riskTimeInterval` input. i.e `riskTimeInterval` = $\Delta t$
 
-`-atProb`
+`-atRate`
 
-This input parameter specifies the specificity required to automatically define the risk groups. The default values are: (0.9,0.8) that implies that the described threshold for high risk will only detect as false positives 10% of the at not risk subjects. The intermediate risk will be the next 10% of the subjects not at risk. The low risk category will include 80% of the subjects that did not have the event.
+This input parameter specifies the (True Negative Rate (TNR o Specificity) or False Negative Rate (TNR or 1-Specificity) required to automatically define the risk groups. The default values are: (0.9,0.8) that implies that the described threshold for high risk will only FPR of 10% of the at not risk subjects. The intermediate risk will be the next 10% of the subjects not at risk. The low risk category will include 80% of the subjects that did not have the event. If the atRate values are lower than 0.5 The function will assume that the user is specifying the desired False Negative Rate (FNR or 1.0-specificity)
 
 `-atThr`
 

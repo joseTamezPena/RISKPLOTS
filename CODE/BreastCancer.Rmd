@@ -80,7 +80,7 @@ pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters
 rdata <- cbind(dataBreast$status,ppoisGzero(index,h0))
 rownames(rdata) <- rownames(dataBreast)
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=dataBreast$time,
                      title="Raw Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -137,7 +137,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataBreast$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=dataBreast$time,
                      title="Calibrated Train: Breast",
                      ysurvlim=c(0.00,1.0),
@@ -232,7 +232,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(status,calprob$prob)
 
 
-rrAnalysisTest <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTest <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=times,
                      title="Calibrated Test: Breast",
                      ysurvlim=c(0.00,1.0),

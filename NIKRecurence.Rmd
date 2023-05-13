@@ -1,0 +1,522 @@
+---
+title: "NIK Recurence"
+author: "Jose Tamez"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    fig_caption: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# NIK and RRPlots
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The libraries
+
+```{r}
+library(survival)
+library(FRESA.CAD)
+library(Biobase)
+op <- par(no.readonly = TRUE)
+pander::panderOptions('digits', 3)
+pander::panderOptions('table.split.table', 400)
+pander::panderOptions('keep.trailing.zeros',TRUE)
+
+```
+
+
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("seventyGeneData")
+```
+
+```{r}
+library(seventyGeneData)
+data(vanDeVijver)
+class(vanDeVijver)
+```
+
+## Getting the clinical data
+```{r}
+pdata <- pData(vanDeVijver)
+
+```
+
+
+## ROC Plots
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+table(pdata$Posnodes)
+
+pander::pander(table(pdata$TTMevent))
+pmroc <- plotModels.ROC(cbind(pdata$TTMevent,-pdata$C1used),name="NIK",thr= -0.4) ## Using paper threshold
+par(op)
+
+```
+
+## RR Plot Signature correlation
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+rdata <- cbind(pdata$TTMevent,pdata$C1used)
+
+
+RRAnalysisCI <- RRPlot(rdata,atRate=c(0.10,0.05),
+                     timetoEvent=pdata$RFS,
+                     title="Signature: Breast Cancer",
+                     ysurvlim=c(0.00,1.0))
+
+par(op)
+
+```
+
+
+### CI Performance all data
+
+```{r results = "asis"}
+
+pander::pander(t(RRAnalysisCI$keyPoints),caption="Threshold values")
+pander::pander(RRAnalysisCI$c.index$cstatCI,caption="C. Index")
+pander::pander(t(RRAnalysisCI$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((RRAnalysisCI$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((RRAnalysisCI$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(RRAnalysisCI$thr_atP),caption="Probability Thresholds")
+pander::pander(RRAnalysisCI$surdif,caption="Logrank test")
+
+```
+
+
+## Node positive data
+
+
+## RR Plot Signature correlation
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+NodePdata <- subset(pdata,Posnodes=="y")
+
+rdata <- cbind(NodePdata$TTMevent,NodePdata$C1used)
+
+
+RRAnalysisPos <- RRPlot(rdata,atRate=c(0.90,0.95),
+                     timetoEvent=NodePdata$RFS,
+                     title="Signature: Breast Cancer",
+                     ysurvlim=c(0.00,1.0))
+
+par(op)
+
+```
+
+### CI Performance positive data
+
+```{r results = "asis"}
+
+pander::pander(t(RRAnalysisPos$keyPoints),caption="Threshold values")
+pander::pander(RRAnalysisPos$c.index$cstatCI,caption="C. Index")
+pander::pander(t(RRAnalysisPos$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((RRAnalysisPos$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((RRAnalysisPos$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(RRAnalysisPos$thr_atP),caption="Probability Thresholds")
+pander::pander(RRAnalysisPos$surdif,caption="Logrank test")
+
+```
+
+
+## Node Negative data
+
+
+## RR Plot Signature correlation
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+NodeNdata <- subset(pdata,Posnodes=="n")
+
+rdata <- cbind(NodeNdata$TTMevent,NodeNdata$C1used)
+
+
+RRAnalysisNeg <- RRPlot(rdata,atRate=c(0.90,0.95),
+                     timetoEvent=NodeNdata$RFS,
+                     title="Signature: Breast Cancer",
+                     ysurvlim=c(0.00,1.0))
+par(op)
+
+```
+
+### CI Performance negative data
+
+```{r results = "asis"}
+
+pander::pander(t(RRAnalysisNeg$keyPoints),caption="Threshold values")
+pander::pander(RRAnalysisNeg$c.index$cstatCI,caption="C. Index")
+pander::pander(t(RRAnalysisNeg$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((RRAnalysisNeg$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((RRAnalysisNeg$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(RRAnalysisNeg$thr_atP),caption="Probability Thresholds")
+pander::pander(RRAnalysisNeg$surdif,caption="Logrank test")
+
+```
+
+
+## RRPlot Cox Model
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+timeinterval <- 5 # Five years
+
+h0 <- sum(pdata$TTMevent & pdata$RFS <= timeinterval)
+h0 <- h0/sum((pdata$RFS > timeinterval) | (pdata$TTMevent==1))
+
+mcox <- coxph(Surv(RFS,TTMevent)~C1used,pdata)
+pander::pander(summary(mcox)$coefficients)
+
+index <- predict(mcox,pdata)
+rdata <- cbind(pdata$TTMevent,ppoisGzero(index,h0))
+
+
+RRAnalysisCox <- RRPlot(rdata,atRate=c(0.90,0.95),
+                     timetoEvent=pdata$RFS,
+                     title="NIK: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+par(op)
+
+```
+## Expected time to event
+
+```{r}
+
+timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
+
+plot(timetoEvent,pdata[rdata[,1]==1,"RFS"],xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,pdata[rdata[,1]==1,"RFS"],method="spearman"))
+
+MADerror <- mean(abs(timetoEvent-pdata[rdata[,1]==1,"RFS"]))
+pander::pander(MADerror)
+
+toinclude <- rdata[,1]==1 | pdata$RFS > 0.5*timeinterval
+sum(toinclude)
+timetoEvent <- log(1.0+meanTimeToEvent(rdata[toinclude,2],timeinterval))
+obstiemToEvent <- log(1.0+pdata[toinclude,"RFS"])
+
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[toinclude,1],
+     xlab="Expected time",
+     ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,obstiemToEvent,method="kendall"))
+
+MADerror2 <- mean(abs(timetoEvent-obstiemToEvent))
+pander::pander(MADerror2)
+
+
+```
+
+
+### Unadjusted Cox Performance
+
+```{r results = "asis"}
+
+pander::pander(t(RRAnalysisCox$keyPoints),caption="Threshold values")
+pander::pander(t(RRAnalysisCox$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(RRAnalysisCox$OE95ci),caption="O/E Mean")
+pander::pander(t(RRAnalysisCox$OAcum95ci),caption="O/Acum Mean")
+pander::pander(RRAnalysisCox$c.index$cstatCI,caption="C. Index")
+pander::pander(t(RRAnalysisCox$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((RRAnalysisCox$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((RRAnalysisCox$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(RRAnalysisCox$thr_atP),caption="Probability Thresholds")
+pander::pander(RRAnalysisCox$surdif,caption="Logrank test")
+
+```
+
+
+## RRPlot Cox Adjusted Model  
+
+This time we will include Lymph node status from pathology report and 
+Estrogen receptor alpha expression measurement from microarray 
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+mcox <- coxph(Surv(RFS,TTMevent)~C1used*(ESR1 + Posnodes),pdata)
+pander::pander(summary(mcox)$coefficients)
+
+
+index <- predict(mcox,pdata)
+rdata <- cbind(pdata$TTMevent,ppoisGzero(index,h0))
+
+
+RRAnalysisAdCox <- RRPlot(rdata,atRate=c(0.90,0.95),
+                     timetoEvent=pdata$RFS,
+                     title="Adjusted: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+par(op)
+
+```
+
+
+## Expected time to event
+
+```{r}
+
+timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
+
+plot(timetoEvent,pdata[rdata[,1]==1,"RFS"],xlab="Expected Time",ylab="Observed Time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,pdata[rdata[,1]==1,"RFS"],method="spearman"))
+
+MADerror <- c(MADerror,mean(abs(timetoEvent-pdata[rdata[,1]==1,"RFS"])))
+pander::pander(MADerror)
+
+
+timetoEvent <- log(1.0+meanTimeToEvent(rdata[toinclude,2],timeinterval))
+
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[toinclude,1],
+     xlab="Expected time",
+     ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,obstiemToEvent,method="kendall"))
+
+MADerror2 <-c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
+pander::pander(MADerror2)
+
+```
+
+
+### Adjusted Cox Performance
+
+```{r results = "asis"}
+
+pander::pander(t(RRAnalysisAdCox$keyPoints),caption="Threshold values")
+pander::pander(t(RRAnalysisAdCox$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(RRAnalysisAdCox$OE95ci),caption="O/E Mean")
+pander::pander(t(RRAnalysisAdCox$OAcum95ci),caption="O/Acum Mean")
+pander::pander(RRAnalysisAdCox$c.index$cstatCI,caption="C. Index")
+pander::pander(t(RRAnalysisAdCox$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((RRAnalysisAdCox$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((RRAnalysisAdCox$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(RRAnalysisAdCox$thr_atP),caption="Probability Thresholds")
+pander::pander(RRAnalysisAdCox$surdif,caption="Logrank test")
+
+```
+
+
+
+## Calibrating the index
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+calprob <- CoxRiskCalibration(mcox,pdata,"TTMevent","RFS")
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+h0 <- calprob$h0
+timeinterval <- calprob$timeInterval;
+
+rdata <- cbind(pdata$TTMevent,calprob$prob)
+
+
+RRAnalysisCalAdCox <- RRPlot(rdata,atRate=c(0.90,0.95),
+                     timetoEvent=pdata$RFS,
+                     title="Cal. NIK: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+par(op)
+
+
+```
+
+## Expected time to event
+
+```{r}
+
+timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
+
+plot(timetoEvent,pdata[rdata[,1]==1,"RFS"],xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,pdata[rdata[,1]==1,"RFS"],method="spearman"))
+
+MADerror <- c(MADerror,mean(abs(timetoEvent-pdata[rdata[,1]==1,"RFS"])))
+pander::pander(MADerror)
+
+timetoEvent <- log(1.0+meanTimeToEvent(rdata[toinclude,2],timeinterval))
+
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[toinclude,1],
+     xlab="Expected time",
+     ylab="Observed time",main="Expected vs. Observed")
+pander::pander(cor.test(timetoEvent,obstiemToEvent,method="kendall"))
+
+MADerror2 <-c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
+pander::pander(MADerror2)
+
+
+```
+
+
+### Calibrated and Adjusted Cox Performance
+
+```{r results = "asis"}
+
+pander::pander(t(RRAnalysisCalAdCox$keyPoints),caption="Threshold values")
+pander::pander(t(RRAnalysisCalAdCox$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(RRAnalysisCalAdCox$OE95ci),caption="O/E Mean")
+pander::pander(t(RRAnalysisCalAdCox$OAcum95ci),caption="O/Acum Mean")
+pander::pander(RRAnalysisCalAdCox$c.index$cstatCI,caption="C. Index")
+pander::pander(t(RRAnalysisCalAdCox$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((RRAnalysisCalAdCox$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((RRAnalysisCalAdCox$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(RRAnalysisCalAdCox$thr_atP),caption="Probability Thresholds")
+pander::pander(RRAnalysisCalAdCox$surdif,caption="Logrank test")
+
+```
+
+## Comparing Risks
+
+### Comparing concordance Index
+```{r results = "asis"}
+## Correlation Index
+cindex <- RRAnalysisCI$c.index$cstatCI
+## Cox Index
+cindex <- rbind(cindex,RRAnalysisCox$c.index$cstatCI)
+## Adjusted Cox Index
+cindex <- rbind(cindex,RRAnalysisAdCox$c.index$cstatCI)
+## Adjusted and Calibrated Cox Index
+cindex <- rbind(cindex,RRAnalysisCalAdCox$c.index$cstatCI)
+rownames(cindex) <- c("CI","Cox","Adj. Cox","Cal. Adj. Cox")
+
+pander::pander(cindex)
+
+```
+
+### Comparing Risk Ratios Index
+```{r results = "asis"}
+## Correlation Index
+RRratio <- c(RR=RRAnalysisCI$keyPoints$RR[1],
+             LCI=RRAnalysisCI$keyPoints$RR_LCI[1],
+             UCI=RRAnalysisCI$keyPoints$RR_UCI[1])
+## Cox Index
+RRratio <- rbind(RRratio,c(RR=RRAnalysisCox$keyPoints$RR[1],
+                           LCI=RRAnalysisCox$keyPoints$RR_LCI[1],
+                           UCI=RRAnalysisCox$keyPoints$RR_UCI[1]))
+## Adjusted Cox Index
+RRratio <- rbind(RRratio,c(RR=RRAnalysisAdCox$keyPoints$RR[1],
+                           LCI=RRAnalysisAdCox$keyPoints$RR_LCI[1],
+                           UCI=RRAnalysisAdCox$keyPoints$RR_UCI[1]))
+## Adjusted and Calibrated Cox Index
+RRratio <- rbind(RRratio,c(RR=RRAnalysisCalAdCox$keyPoints$RR[1],
+                           LCI=RRAnalysisCalAdCox$keyPoints$RR_LCI[1],
+                           UCI=RRAnalysisCalAdCox$keyPoints$RR_UCI[1]))
+rownames(RRratio) <- c("CI","Cox","Adj. Cox","Cal. Adj. Cox")
+pander::pander(RRratio)
+
+```
+
+
+### Comparing logRank values
+```{r results = "asis"}
+## Correlation Index
+SurvDif <- c(chisq=RRAnalysisCI$surdif$chisq,pvalue=RRAnalysisCI$surdif$pvalue)
+## Cox Index
+SurvDif <- rbind(SurvDif,c(chisq=RRAnalysisCox$surdif$chisq,pvalue=RRAnalysisCox$surdif$pvalue))
+## Adjusted Cox Index
+SurvDif <- rbind(SurvDif,c(chisq=RRAnalysisAdCox$surdif$chisq,pvalue=RRAnalysisAdCox$surdif$pvalue))
+## Adjusted and Calibrated Cox Index
+SurvDif <- rbind(SurvDif,c(chisq=RRAnalysisCalAdCox$surdif$chisq,pvalue=RRAnalysisCalAdCox$surdif$pvalue))
+rownames(SurvDif) <- c("CI","Cox","Adj. Cox","Cal. Adj. Cox")
+
+pander::pander(SurvDif)
+
+```
+
+### Comparing Sensitivity
+```{r results = "asis"}
+## Correlation Index
+sensi <- RRAnalysisCI$ROCAnalysis$sensitivity
+## Cox Index
+sensi <- rbind(sensi,RRAnalysisCox$ROCAnalysis$sensitivity)
+## Adjusted Cox Index
+sensi <- rbind(sensi,RRAnalysisAdCox$ROCAnalysis$sensitivity)
+## Adjusted and Calibrated Cox Index
+sensi <- rbind(sensi,RRAnalysisCalAdCox$ROCAnalysis$sensitivity)
+rownames(sensi) <- c("CI","Cox","Adj. Cox","Cal. Adj. Cox")
+
+pander::pander(sensi)
+
+```
+
+### Comparing Specificity
+```{r results = "asis"}
+## Correlation Index
+speci <- RRAnalysisCI$ROCAnalysis$specificity
+## Cox Index
+speci <- rbind(speci,RRAnalysisCox$ROCAnalysis$specificity)
+## Adjusted Cox Index
+speci <- rbind(speci,RRAnalysisAdCox$ROCAnalysis$specificity)
+## Adjusted and Calibrated Cox Index
+speci <- rbind(speci,RRAnalysisCalAdCox$ROCAnalysis$specificity)
+rownames(speci) <- c("CI","Cox","Adj. Cox","Cal. Adj. Cox")
+pander::pander(speci)
+
+```
+
+
+### Comparing O/E
+```{r results = "asis"}
+OERatio <- NULL
+## Cox Index
+OERatio <- rbind(OERatio,RRAnalysisCox$OERatio$estimate)
+## Adjusted Cox Index
+OERatio <- rbind(OERatio,RRAnalysisAdCox$OERatio$estimate)
+## Adjusted and Calibrated Cox Index
+OERatio <- rbind(OERatio,RRAnalysisCalAdCox$OERatio$estimate)
+rownames(OERatio) <- c("Cox","Adj. Cox","Cal. Adj. Cox")
+
+pander::pander(OERatio)
+
+```
+
+
+### Comparing O/Acum
+```{r results = "asis"}
+OARatio <- NULL
+## Cox Index
+OARatio <- rbind(OARatio,RRAnalysisCox$OARatio$estimate)
+## Adjusted Cox Index
+OARatio <- rbind(OARatio,RRAnalysisAdCox$OARatio$estimate)
+## Adjusted and Calibrated Cox Index
+OARatio <- rbind(OARatio,RRAnalysisCalAdCox$OARatio$estimate)
+rownames(OARatio) <- c("Cox","Adj. Cox","Cal. Adj. Cox")
+pander::pander(OARatio)
+
+```
+
+### Comparing NetBenefit
+```{r results = "asis"}
+NetBen <- NULL
+## Cox Index
+NetBen <- rbind(NetBen,RRAnalysisCox$keyPoints$NetBenefit)
+## Adjusted Cox Index
+NetBen <- rbind(NetBen,RRAnalysisAdCox$keyPoints$NetBenefit)
+## Adjusted and Calibrated Cox Index
+NetBen <- rbind(NetBen,RRAnalysisCalAdCox$keyPoints$NetBenefit)
+colnames(NetBen) <- rownames(RRAnalysisCox$keyPoints)
+rownames(NetBen) <- c("Cox","Adj. Cox","Cal. Adj. Cox")
+pander::pander(NetBen)
+
+```
+
+## Compare the ROC AUC
+
+```{r results = "asis"}
+
+pander::pander(pROC::roc.test(RRAnalysisCI$ROCAnalysis$ROC.analysis$roc.predictor,
+                              RRAnalysisAdCox$ROCAnalysis$ROC.analysis$roc.predictor))
+
+```
+
+

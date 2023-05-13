@@ -3,14 +3,14 @@ title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
 date: '`r Sys.Date()`'
 output:
-  html_document: 
-    toc: yes
-    fig_caption: yes
-    number_sections: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     fig_crop: no
+    number_sections: yes
+  html_document: 
+    toc: yes
+    fig_caption: yes
     number_sections: yes
 editor_options:
   chunk_output_type: console
@@ -71,7 +71,7 @@ topf <- topFive[1]
 for (topf in topFive)
 {
   RRanalysis[[idx]] <- RRPlot(cbind(dataBreast$status,dataBreast[,topf]),
-                              atProb=c(0.90,0.80),
+                              atRate=c(0.90,0.80),
                   timetoEvent=dataBreast$time,
                   title=topf,
 #                  plotRR=FALSE
@@ -160,7 +160,7 @@ pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters
 rdata <- cbind(dataBreast$status,ppoisGzero(index,h0))
 rownames(rdata) <- rownames(dataBreast)
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBreast$time,
                      title="Raw Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),

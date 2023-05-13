@@ -42,11 +42,9 @@ Here are some sample plots returned by the evaluated functions:
 ```{r}
 library(survival)
 library(FRESA.CAD)
-#source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-#source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
-#pander::panderOptions('table.split.table', 400)
+pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
 
 ```
@@ -145,7 +143,7 @@ pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters
 index <- predict(ml,dataBrestCancerTrain)
 rdata <- cbind(dataBrestCancerTrain$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -199,7 +197,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Cal. Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -274,7 +272,7 @@ pander::pander(c(h0=calprob$h0,
 
 rdata <- cbind(dataBrestCancerTest$status,calprob$prob)
 
-rrAnalysis <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysis <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTest$time,
                      title="Cal. Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -327,7 +325,7 @@ op <- par(no.readonly = TRUE)
 cprob <- predict(mlog,dataBrestCancerTrain)
 
 rdata <- cbind(dataBrestCancerTrain$status,cprob)
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Logistic Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -404,7 +402,7 @@ gain <- calprob$hazardGain
 rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Cal. Logistic Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
