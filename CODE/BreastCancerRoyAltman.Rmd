@@ -3,14 +3,14 @@ title: "Risk-Evaluation: Breast Cancer Royston-Altman"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  html_document: 
-    toc: yes
-    fig_caption: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     number_sections: yes
     fig_crop: no
+  html_document: 
+    toc: yes
+    fig_caption: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -158,7 +158,8 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
 obstime <- dataBrestCancerTrain[rdata[,1]==1,"time"]
 
-plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
+plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed",log="xy")
+
 pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
 
 MADerror <- mean(abs(timetoEvent-obstime))
@@ -184,7 +185,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
@@ -228,7 +228,7 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
 obstime <- dataBrestCancerTrain[rdata[,1]==1,"time"]
 
-plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
+plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed",log="xy")
 pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
 
 MADerror <- mean(abs(timetoEvent-obstime))
@@ -250,7 +250,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
@@ -286,7 +285,6 @@ pander::pander(t(rrCoxTestAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrCoxTestAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrCoxTestAnalysis$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrCoxTestAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrCoxTestAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrCoxTestAnalysis$surdif,caption="Logrank test")
 
 ```
@@ -323,7 +321,6 @@ pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysis$surdif,caption="Logrank test")
 
 ```
@@ -379,7 +376,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
@@ -411,7 +407,6 @@ pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysis$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysis$surdif,caption="Logrank test")
 
 ```
@@ -457,7 +452,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
@@ -487,7 +481,6 @@ pander::pander(t(rrAnalysisTestLogistic$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTestLogistic$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTestLogistic$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTestLogistic$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTestLogistic$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTestLogistic$surdif,caption="Logrank test")
 
 ```

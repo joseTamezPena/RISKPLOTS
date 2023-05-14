@@ -3,14 +3,14 @@ title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
 date: '`r Sys.Date()`'
 output:
-  html_document: 
-    toc: yes
-    fig_caption: yes
-    number_sections: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     fig_crop: no
+    number_sections: yes
+  html_document: 
+    toc: yes
+    fig_caption: yes
     number_sections: yes
 editor_options:
   chunk_output_type: console
@@ -96,6 +96,7 @@ LogRangp <- NULL
 Sensitivity <- NULL
 Specificity <- NULL
 MAXBACC <- NULL
+RREst <- NULL
 
 for (topf in topFive)
 {
@@ -105,6 +106,7 @@ for (topf in topFive)
   Specificity <- rbind(Specificity,RRanalysis[[topf]]$ROCAnalysis$specificity)
   ROCAUC <- rbind(ROCAUC,RRanalysis[[topf]]$ROCAnalysis$aucs)
   MAXBACC <- rbind(MAXBACC,RRanalysis[[topf]]$keyPoints["@MAX_BACC",c("BACC")])
+  RREst <- rbind(RREst,RRanalysis[[topf]]$keyPoints[1,c("RR")])
 }
 rownames(CstatCI) <- topFive
 rownames(LogRangp) <- topFive
@@ -112,6 +114,7 @@ rownames(Sensitivity) <- topFive
 rownames(Specificity) <- topFive
 rownames(ROCAUC) <- topFive
 rownames(MAXBACC) <- topFive
+rownames(RREst) <- topFive
 
 pander::pander(ROCAUC)
 pander::pander(CstatCI)
@@ -119,9 +122,10 @@ pander::pander(LogRangp)
 pander::pander(Sensitivity)
 pander::pander(Specificity)
 pander::pander(MAXBACC)
+pander::pander(RREst)
 
-meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1],MAXBACC)
-colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe","MAX_BACC")
+meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],RREst,Sensitivity[,1],Specificity[,1],MAXBACC)
+colnames(meanMatrix) <- c("ROCAUC","C-Stat","RR","Sen","Spe","MAX_BACC")
 pander::pander(meanMatrix)
 
 ```
