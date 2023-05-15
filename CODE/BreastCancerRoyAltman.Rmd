@@ -3,14 +3,14 @@ title: "Risk-Evaluation: Breast Cancer Royston-Altman"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
+  html_document: 
+    toc: yes
+    fig_caption: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     number_sections: yes
     fig_crop: no
-  html_document: 
-    toc: yes
-    fig_caption: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -154,16 +154,37 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 
 ### Time to event
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+toinclude <- rdata[,1]==1 | dataBrestCancerTrain$time > 2.0*timeinterval
+obstiemToEvent <- dataBrestCancerTrain[toinclude,"time"]
+tmin<-min(obstiemToEvent)
+sum(toinclude)
 
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-obstime <- dataBrestCancerTrain[rdata[,1]==1,"time"]
+timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent~0+timetoEvent)
+sm <- summary(lmfit)
+pander::pander(sm)
 
-plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed",log="xy")
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[toinclude,1],
+     xlab="Expected time",
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+text(tmin+0.005*(tmax-tmin),tmax,sprintf("R.sq=%4.3f",sm$r.squared),cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
 
-pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
+MADerror2 <- mean(abs(timetoEvent-obstiemToEvent))
+pander::pander(MADerror2)
 
-MADerror <- mean(abs(timetoEvent-obstime))
-pander::pander(MADerror)
 
 ```
 
@@ -225,14 +246,32 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 ### Time to event after calibration
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-obstime <- dataBrestCancerTrain[rdata[,1]==1,"time"]
 
-plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed",log="xy")
-pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
+timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent~0+timetoEvent)
+sm <- summary(lmfit)
+pander::pander(sm)
 
-MADerror <- mean(abs(timetoEvent-obstime))
-pander::pander(MADerror)
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[toinclude,1],
+     xlab="Expected time",
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+text(tmin+0.005*(tmax-tmin),tmax,sprintf("R.sq=%4.3f",sm$r.squared),cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
+
+MADerror2 <- c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
+pander::pander(MADerror2)
 
 ```
 

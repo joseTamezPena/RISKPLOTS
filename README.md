@@ -207,7 +207,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The Observed/Expected Ratio using the last observation
 
-        pinfo$OERatio
+    ```         
+    pinfo$OERatio
+    ```
 
     </div>
 
@@ -220,7 +222,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The mean Observed/Expected Ratio computed using the 95% of the data.
 
-        pinforrAnalysisTrain$OE95ci
+    ```         
+    pinforrAnalysisTrain$OE95ci
+    ```
 
     </div>
 
@@ -233,7 +237,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The Observed/Accumulated probability ratio
 
-        pinfo$OAcum95ci
+    ```         
+    pinfo$OAcum95ci
+    ```
 
     </div>
 
@@ -246,7 +252,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The C-Index
 
-        pinfo$c.index$cstatCI
+    ```         
+    pinfo$c.index$cstatCI
+    ```
 
     </div>
 
@@ -258,7 +266,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The ROC AUC
 
-        pinfo$ROCAnalysis$aucs
+    ```         
+    pinfo$ROCAnalysis$aucs
+    ```
 
     </div>
 
@@ -271,7 +281,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The Sensitivity
 
-        pinfo$ROCAnalysis$sensitivity
+    ```         
+    pinfo$ROCAnalysis$sensitivity
+    ```
 
     </div>
 
@@ -284,7 +296,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The Specificity
 
-        pinfo$ROCAnalysis$specificity
+    ```         
+    pinfo$ROCAnalysis$specificity
+    ```
 
     </div>
 
@@ -297,7 +311,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The thresholds used to stratify the population into risk groups
 
-        pinfo$thr_atP
+    ```         
+    pinfo$thr_atP
+    ```
 
     </div>
 
@@ -310,7 +326,9 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The Risk Ratio between High-Risk and the rest
 
-        pinfo$RR_atP
+    ```         
+    pinfo$RR_atP
+    ```
 
     </div>
 
@@ -323,12 +341,14 @@ It reports thresholds for user specified values of sensitivity (\@0.9 and \@0.8)
 
     The Logrank test analysis via de survdif procedure
 
-        pinfo$surdif
+    ```         
+    pinfo$surdif
+    ```
 
     </div>
 
 |             |      |          |          |            | Logrank test Chisq = 479.123919 on 2 degrees of freedom, p = 0.000000 |
-|------------|------------|------------|------------|------------|------------|
+|-------------|------|----------|----------|------------|-----------------------------------------------------------------------|
 |             | N    | Observed | Expected | (O-E)\^2/E | (O-E)\^2/V                                                            |
 | **class=0** | 1983 | 812      | 1145     | 96.7       | 398.2                                                                 |
 | **class=1** | 396  | 250      | 177      | 29.6       | 33.6                                                                  |
@@ -340,37 +360,45 @@ FRESA.CAD provides two functions to calibrate risk probabilities.
 
 The first option is:
 
-    calprob <- CoxRiskCalibration(coxModel,dataset,"status","time")
+```         
+calprob <- CoxRiskCalibration(coxModel,dataset,"status","time")
+```
 
 The `CoxRiskCalibration()` function takes a cox model to estimate the probabilities on the provided data set. The status parameter as the time parameters defines the columns that have the censoring status and the time to event information. At return the method provides the calibrated probabilities as well as the baseline hazard, and the time interval that best describe the observed events. This is the result of calibrating the original probabilities.
 
-    timeinterval <- calprob$timeInterval;
-    rdata <- cbind(data$status,calprob$prob)
-    rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
-                         timetoEvent=data$time,
-                         title="Cal. Logistic Train: Breast Cancer",
-                         ysurvlim=c(0.00,1.0),
-                         riskTimeInterval=timeinterval)
+```         
+timeinterval <- calprob$timeInterval;
+rdata <- cbind(data$status,calprob$prob)
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=data$time,
+                     title="Cal. Logistic Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+```
 
 ![![](images/paste-3333E286.png)](images/paste-6EE76927.png)
 
 The second method takes the predicted probabilities
 
-    calprob <- CalibrationProbPoissonRisk(riskdata)
+```         
+calprob <- CalibrationProbPoissonRisk(riskdata)
+```
 
 where riskdata is:
 
-    riskdata <- cbind(data$status,predict(mlog,data),data$time)
-    calprob <- CalibrationProbPoissonRisk(riskdata)
-    timeinterval <- calprob$timeInterval;
-    rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
+```         
+riskdata <- cbind(data$status,predict(mlog,data),data$time)
+calprob <- CalibrationProbPoissonRisk(riskdata)
+timeinterval <- calprob$timeInterval;
+rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 
-    rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
-                         timetoEvent=data$time,
-                         title="Cal. Logistic Train: Breast Cancer",
-                         ysurvlim=c(0.00,1.0),
-                         riskTimeInterval=timeinterval)
+rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+                     timetoEvent=data$time,
+                     title="Cal. Logistic Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+```
 
 The predict function must return the probability of event. After calibration the returned probabilities should match the observed events. ![](images/paste-A9DC722B.png)
 
@@ -386,77 +414,81 @@ You can compare two risk prob. The returned outputs of the RRPlot() function hav
 
 Can be used to compared the risk probabilities of two models: Here is a sample code to compared the returned outputs of a Cox and Logistic models on data.
 
-    maxobs <- sum(dataBrestCancerTest$status)
+```         
+maxobs <- sum(dataBrestCancerTest$status)
 
-    par(mfrow=c(1,2),cex=0.75)
+par(mfrow=c(1,2),cex=0.75)
 
-    plot(rrCoxTestAnalysis$CumulativeOvs,type="l",lty=1,
-         main="Cumulative Probability",
-         xlab="Observed",
-         ylab="Cumulative Probability",
-         ylim=c(0,maxobs),
-         xlim=c(0,maxobs))
-    lines(rrAnalysisTestLogistic$CumulativeOvs,lty=2,col="red")
-    lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
-    legend("topleft",legend = c("Cox","Logistic","Ideal"),
-           col=c("black","red","gray"),
-           lty=c(1,2,3),
-           cex=0.75
-    )
+plot(rrCoxTestAnalysis$CumulativeOvs,type="l",lty=1,
+     main="Cumulative Probability",
+     xlab="Observed",
+     ylab="Cumulative Probability",
+     ylim=c(0,maxobs),
+     xlim=c(0,maxobs))
+lines(rrAnalysisTestLogistic$CumulativeOvs,lty=2,col="red")
+lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
+legend("topleft",legend = c("Cox","Logistic","Ideal"),
+       col=c("black","red","gray"),
+       lty=c(1,2,3),
+       cex=0.75
+)
 
 
-    plot(rrCoxTestAnalysis$CumulativeOvs$Observed,
-         rrCoxTestAnalysis$CumulativeOvs$Cumulative-
-           rrCoxTestAnalysis$CumulativeOvs$Observed,
-         main="Cumulative Risk Difference",
-         xlab="Observed",
-         ylab="Cumulative Risk - Observed",
-         type="l",
-         lty=1)
-    lines(rrAnalysisTestLogistic$CumulativeOvs$Observed,
-         rrAnalysisTestLogistic$CumulativeOvs$Cumulative-
-           rrAnalysisTestLogistic$CumulativeOvs$Observed,
-         lty=2,
-         col="red")
-    legend("topleft",legend = c("Cox","Logistic"),
-           col=c("black","red"),
-           lty=c(1,2),
-           cex=0.75
-    )
+plot(rrCoxTestAnalysis$CumulativeOvs$Observed,
+     rrCoxTestAnalysis$CumulativeOvs$Cumulative-
+       rrCoxTestAnalysis$CumulativeOvs$Observed,
+     main="Cumulative Risk Difference",
+     xlab="Observed",
+     ylab="Cumulative Risk - Observed",
+     type="l",
+     lty=1)
+lines(rrAnalysisTestLogistic$CumulativeOvs$Observed,
+     rrAnalysisTestLogistic$CumulativeOvs$Cumulative-
+       rrAnalysisTestLogistic$CumulativeOvs$Observed,
+     lty=2,
+     col="red")
+legend("topleft",legend = c("Cox","Logistic"),
+       col=c("black","red"),
+       lty=c(1,2),
+       cex=0.75
+)
+```
 
 ![](images/paste-6E8DFC50.png)
 
-    plot(rrCoxTestAnalysis$OEData[,2:3],type="l",lty=1,
-         main="Expected over Time",
-         xlab="Observed",
-         ylab="Expected",
-         ylim=c(0,maxobs),
-         xlim=c(0,maxobs))
-    lines(rrAnalysisTestLogistic$OEData[,2:3],lty=2,col="red")
-    lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
-    legend("topleft",legend = c("Cox","Logistic","Ideal"),
-           col=c("black","red","gray"),
-           lty=c(1,2,3),
-           cex=0.75
-    )
+```         
+plot(rrCoxTestAnalysis$OEData[,2:3],type="l",lty=1,
+     main="Expected over Time",
+     xlab="Observed",
+     ylab="Expected",
+     ylim=c(0,maxobs),
+     xlim=c(0,maxobs))
+lines(rrAnalysisTestLogistic$OEData[,2:3],lty=2,col="red")
+lines(x=c(0,maxobs),y=c(0,maxobs),lty=3,col="gray")
+legend("topleft",legend = c("Cox","Logistic","Ideal"),
+       col=c("black","red","gray"),
+       lty=c(1,2,3),
+       cex=0.75
+)
 
-    plot(rrCoxTestAnalysis$OEData$Observed,
-         rrCoxTestAnalysis$OEData$Expected-
-           rrCoxTestAnalysis$OEData$Observed,
-         main="Expected vs Observed Difference",
-         xlab="Observed",
-         ylab="Cumulative - Observed",
-         type="l",
-         lty=1)
-    lines(rrAnalysisTestLogistic$OEData$Observed,
-         rrAnalysisTestLogistic$OEData$Expected-
-           rrAnalysisTestLogistic$OEData$Observed,
-         lty=2,col="red")
+plot(rrCoxTestAnalysis$OEData$Observed,
+     rrCoxTestAnalysis$OEData$Expected-
+       rrCoxTestAnalysis$OEData$Observed,
+     main="Expected vs Observed Difference",
+     xlab="Observed",
+     ylab="Cumulative - Observed",
+     type="l",
+     lty=1)
+lines(rrAnalysisTestLogistic$OEData$Observed,
+     rrAnalysisTestLogistic$OEData$Expected-
+       rrAnalysisTestLogistic$OEData$Observed,
+     lty=2,col="red")
 
-    legend("bottomleft",legend = c("Cox","Logistic"),
-           col=c("black","red"),
-           lty=c(1,2),
-           cex=0.75
-    )
+legend("bottomleft",legend = c("Cox","Logistic"),
+       col=c("black","red"),
+       lty=c(1,2),
+       cex=0.75
+)
+```
 
 ![](images/paste-838F33F1.png)

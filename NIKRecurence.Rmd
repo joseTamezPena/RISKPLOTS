@@ -3,11 +3,11 @@ title: "NIK Recurence"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     toc: yes
     fig_caption: yes
-  pdf_document:
-    toc: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -34,9 +34,10 @@ pander::panderOptions('keep.trailing.zeros',TRUE)
 
 ```{r}
 if (!require("BiocManager", quietly = TRUE))
+{
     install.packages("BiocManager")
-
-BiocManager::install("seventyGeneData")
+    BiocManager::install("seventyGeneData")
+}
 ```
 
 ```{r}
@@ -189,25 +190,27 @@ par(op)
 ## Expected time to event
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-
-plot(timetoEvent,pdata[rdata[,1]==1,"RFS"],xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,pdata[rdata[,1]==1,"RFS"],method="spearman"))
-
-MADerror <- mean(abs(timetoEvent-pdata[rdata[,1]==1,"RFS"]))
-pander::pander(MADerror)
-
-toinclude <- rdata[,1]==1 | pdata$RFS > 0.5*timeinterval
+toinclude <- rdata[,1]==1 | pdata$RFS > 2.0*timeinterval
+obstiemToEvent <- pdata[toinclude,"RFS"]
+tmin<-min(obstiemToEvent)
 sum(toinclude)
-timetoEvent <- log(1.0+meanTimeToEvent(rdata[toinclude,2],timeinterval))
-obstiemToEvent <- log(1.0+pdata[toinclude,"RFS"])
+
+timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent~0+timetoEvent)
+sm <- summary(lmfit)
+pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
      col=1+rdata[toinclude,1],
      xlab="Expected time",
-     ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,obstiemToEvent,method="kendall"))
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+text(tmin+0.01*(tmax-tmin),tmax,sprintf("R.sq=%3.2f",sm$r.squared),cex=0.7)
 
 MADerror2 <- mean(abs(timetoEvent-obstiemToEvent))
 pander::pander(MADerror2)
@@ -263,22 +266,22 @@ par(op)
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-
-plot(timetoEvent,pdata[rdata[,1]==1,"RFS"],xlab="Expected Time",ylab="Observed Time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,pdata[rdata[,1]==1,"RFS"],method="spearman"))
-
-MADerror <- c(MADerror,mean(abs(timetoEvent-pdata[rdata[,1]==1,"RFS"])))
-pander::pander(MADerror)
-
-
-timetoEvent <- log(1.0+meanTimeToEvent(rdata[toinclude,2],timeinterval))
+timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent~0+timetoEvent)
+sm <- summary(lmfit)
+pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
      col=1+rdata[toinclude,1],
      xlab="Expected time",
-     ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,obstiemToEvent,method="kendall"))
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+text(tmin+0.01*(tmax-tmin),tmax,sprintf("R.sq=%3.2f",sm$r.squared),cex=0.7)
 
 MADerror2 <-c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
 pander::pander(MADerror2)
@@ -335,21 +338,22 @@ par(op)
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-
-plot(timetoEvent,pdata[rdata[,1]==1,"RFS"],xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,pdata[rdata[,1]==1,"RFS"],method="spearman"))
-
-MADerror <- c(MADerror,mean(abs(timetoEvent-pdata[rdata[,1]==1,"RFS"])))
-pander::pander(MADerror)
-
-timetoEvent <- log(1.0+meanTimeToEvent(rdata[toinclude,2],timeinterval))
+timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent~0+timetoEvent)
+sm <- summary(lmfit)
+pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
      col=1+rdata[toinclude,1],
      xlab="Expected time",
-     ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,obstiemToEvent,method="kendall"))
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+text(tmin+0.01*(tmax-tmin),tmax,sprintf("R.sq=%3.2f",sm$r.squared),cex=0.7)
 
 MADerror2 <-c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
 pander::pander(MADerror2)
