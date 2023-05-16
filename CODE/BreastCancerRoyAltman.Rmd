@@ -3,14 +3,14 @@ title: "Risk-Evaluation: Breast Cancer Royston-Altman"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  html_document: 
-    toc: yes
-    fig_caption: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     number_sections: yes
     fig_crop: no
+  html_document: 
+    toc: yes
+    fig_caption: yes
 editor_options:
   chunk_output_type: console
 ---
@@ -154,19 +154,19 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 
 ### Time to event
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-toinclude <- rdata[,1]==1 | dataBrestCancerTrain$time > 2.0*timeinterval
-obstiemToEvent <- dataBrestCancerTrain[toinclude,"time"]
+toinclude <- rdata[,1]==1 
+obstiemToEvent <- dataBrestCancerTrain[,"time"]
 tmin<-min(obstiemToEvent)
 sum(toinclude)
 
-timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
 tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent~0+timetoEvent)
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
 sm <- summary(lmfit)
 pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[toinclude,1],
+     col=1+rdata[,1],
      xlab="Expected time",
      ylab="Observed time",
      main="Expected vs. Observed",
@@ -174,7 +174,8 @@ plot(timetoEvent,obstiemToEvent,
      ylim=c(tmin,tmax),
      log="xy")
 lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-text(tmin+0.005*(tmax-tmin),tmax,sprintf("R.sq=%4.3f",sm$r.squared),cex=0.7)
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
 text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
 legend("bottomright",legend=c("No Event","Event","Linear fit"),
              pch=c(1,1,-1),
@@ -182,7 +183,7 @@ legend("bottomright",legend=c("No Event","Event","Linear fit"),
              lty=c(-1,-1,1)
              )
 
-MADerror2 <- mean(abs(timetoEvent-obstiemToEvent))
+MADerror2 <- mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude]))
 pander::pander(MADerror2)
 
 
@@ -216,7 +217,7 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 op <- par(no.readonly = TRUE)
 
 
-calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time")
+calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time",timeInterval=timeinterval)
 
 
 pander::pander(c(h0=calprob$h0,
@@ -247,14 +248,14 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 
-timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
 tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent~0+timetoEvent)
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
 sm <- summary(lmfit)
 pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[toinclude,1],
+     col=1+rdata[,1],
      xlab="Expected time",
      ylab="Observed time",
      main="Expected vs. Observed",
@@ -262,7 +263,8 @@ plot(timetoEvent,obstiemToEvent,
      ylim=c(tmin,tmax),
      log="xy")
 lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-text(tmin+0.005*(tmax-tmin),tmax,sprintf("R.sq=%4.3f",sm$r.squared),cex=0.7)
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
 text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
 legend("bottomright",legend=c("No Event","Event","Linear fit"),
              pch=c(1,1,-1),
@@ -270,7 +272,7 @@ legend("bottomright",legend=c("No Event","Event","Linear fit"),
              lty=c(-1,-1,1)
              )
 
-MADerror2 <- c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
+MADerror2 <- c(MADerror2,mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude])))
 pander::pander(MADerror2)
 
 ```

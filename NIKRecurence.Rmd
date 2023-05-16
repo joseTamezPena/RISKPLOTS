@@ -3,8 +3,11 @@ title: "NIK Recurence"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
+  pdf_document: 
     toc: yes
+    fig_caption: yes
+    fig_crop: no
+    number_sections: yes
   html_document:
     toc: yes
     fig_caption: yes
@@ -190,19 +193,19 @@ par(op)
 ## Expected time to event
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-toinclude <- rdata[,1]==1 | pdata$RFS > 2.0*timeinterval
-obstiemToEvent <- pdata[toinclude,"RFS"]
+toinclude <- rdata[,1]==1 
+obstiemToEvent <- pdata[,"RFS"]
 tmin<-min(obstiemToEvent)
 sum(toinclude)
 
-timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
 tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent~0+timetoEvent)
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
 sm <- summary(lmfit)
 pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[toinclude,1],
+     col=1+rdata[,1],
      xlab="Expected time",
      ylab="Observed time",
      main="Expected vs. Observed",
@@ -210,9 +213,16 @@ plot(timetoEvent,obstiemToEvent,
      ylim=c(tmin,tmax),
      log="xy")
 lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-text(tmin+0.01*(tmax-tmin),tmax,sprintf("R.sq=%3.2f",sm$r.squared),cex=0.7)
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
 
-MADerror2 <- mean(abs(timetoEvent-obstiemToEvent))
+MADerror2 <- mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude]))
 pander::pander(MADerror2)
 
 
@@ -266,14 +276,14 @@ par(op)
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
 tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent~0+timetoEvent)
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
 sm <- summary(lmfit)
 pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[toinclude,1],
+     col=1+rdata[,1],
      xlab="Expected time",
      ylab="Observed time",
      main="Expected vs. Observed",
@@ -281,7 +291,14 @@ plot(timetoEvent,obstiemToEvent,
      ylim=c(tmin,tmax),
      log="xy")
 lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-text(tmin+0.01*(tmax-tmin),tmax,sprintf("R.sq=%3.2f",sm$r.squared),cex=0.7)
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
 
 MADerror2 <-c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
 pander::pander(MADerror2)
@@ -311,7 +328,7 @@ pander::pander(RRAnalysisAdCox$surdif,caption="Logrank test")
 ## Calibrating the index
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-calprob <- CoxRiskCalibration(mcox,pdata,"TTMevent","RFS")
+calprob <- CoxRiskCalibration(mcox,pdata,"TTMevent","RFS",timeInterval=timeinterval)
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
                  DeltaTime=calprob$timeInterval),
@@ -338,14 +355,14 @@ par(op)
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[toinclude,2],timeinterval)
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
 tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent~0+timetoEvent)
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
 sm <- summary(lmfit)
 pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[toinclude,1],
+     col=1+rdata[,1],
      xlab="Expected time",
      ylab="Observed time",
      main="Expected vs. Observed",
@@ -353,7 +370,14 @@ plot(timetoEvent,obstiemToEvent,
      ylim=c(tmin,tmax),
      log="xy")
 lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-text(tmin+0.01*(tmax-tmin),tmax,sprintf("R.sq=%3.2f",sm$r.squared),cex=0.7)
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
 
 MADerror2 <-c(MADerror2,mean(abs(timetoEvent-obstiemToEvent)))
 pander::pander(MADerror2)

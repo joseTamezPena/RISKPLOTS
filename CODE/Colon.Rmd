@@ -49,7 +49,7 @@ data <- colon
 data$time <- NULL
 data$study <- NULL
 table(data$status)
-dataColon <- as.data.frame(model.matrix(status~.*age,data))
+dataColon <- as.data.frame(model.matrix(status~.*.,data))
 dataColon$`(Intercept)` <- NULL
 dataColon$time <- time/365
 dataColon$status <- status
@@ -71,7 +71,7 @@ pander::pander(table(dataColonTest$status))
 
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-ml <- BSWiMS.model(Surv(time,status)~1,data=dataColonTrain,NumberofRepeats = 10)
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataColonTrain,NumberofRepeats = 3)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
@@ -87,7 +87,7 @@ Here we will use the predicted event probability assuming a baseline hazard for 
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 index <- predict(ml,dataColonTrain)
-timeinterval <- 2*mean(subset(dataColonTrain,status==1)$time)
+timeinterval <- round(2*mean(subset(dataColonTrain,status==1)$time),0)
 
 h0 <- sum(dataColonTrain$status & dataColonTrain$time <= timeinterval)
 h0 <- h0/sum((dataColonTrain$time > timeinterval) | (dataColonTrain$status==1))
@@ -105,14 +105,38 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
 ### Time to event 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-obstime <- dataColonTrain[rdata[,1]==1,"time"]
+toinclude <- rdata[,1]==1 
+obstiemToEvent <- dataColonTrain[,"time"]
+tmin<-min(obstiemToEvent)
+sum(toinclude)
 
-plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
+sm <- summary(lmfit)
+pander::pander(sm)
 
-MADerror <- mean(abs(timetoEvent-obstime))
-pander::pander(MADerror)
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[,1],
+     xlab="Expected Time",
+     ylab="Observed Time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
+
+MADerror2 <- mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude]))
+pander::pander(MADerror2)
+
 
 ```
 
@@ -129,7 +153,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
@@ -142,11 +165,11 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 op <- par(no.readonly = TRUE)
 
 
-calprob <- CoxRiskCalibration(ml,dataColonTrain,"status","time")
+calprob <- CoxRiskCalibration(ml,dataColonTrain,"status","time",timeInterval=timeinterval)
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
-                 DeltaTime=calprob$timeInterval),
+                 TimeInterval=calprob$timeInterval),
                caption="Cox Calibration Parameters")
 
 ```
@@ -172,14 +195,34 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
 ### Time to event after calibration
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-timetoEvent <- meanTimeToEvent(rdata[rdata[,1]==1,2],timeinterval)
-obstime <- dataColonTrain[rdata[,1]==1,"time"]
 
-plot(timetoEvent,obstime,xlab="Expected time",ylab="Observed time",main="Expected vs. Observed")
-pander::pander(cor.test(timetoEvent,obstime,method="spearman"))
 
-MADerror <- mean(abs(timetoEvent-obstime))
-pander::pander(MADerror)
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
+tmax<-max(c(obstiemToEvent,timetoEvent))
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
+sm <- summary(lmfit)
+pander::pander(sm)
+
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[,1],
+     xlab="Expected time",
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
+
+MADerror2 <- c(MADerror2,mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude])))
+pander::pander(MADerror2)
 
 ```
 
@@ -196,7 +239,6 @@ pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 
 ```
@@ -231,7 +273,6 @@ pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```
@@ -285,7 +326,6 @@ pander::pander(t(rrAnalysisCVTest$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisCVTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisCVTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisCVTest$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisCVTest$RR_atP),caption="Risk Ratio")
 pander::pander(rrAnalysisCVTest$surdif,caption="Logrank test")
 
 ```

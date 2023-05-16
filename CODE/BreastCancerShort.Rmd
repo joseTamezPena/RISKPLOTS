@@ -3,14 +3,14 @@ title: 'Breast Cancer: Wisconsin'
 author: "Jose Tamez"
 date: '`r Sys.Date()`'
 output:
+  html_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
   pdf_document: 
     toc: yes
     fig_caption: yes
     fig_crop: no
-    number_sections: yes
-  html_document: 
-    toc: yes
-    fig_caption: yes
     number_sections: yes
 editor_options:
   chunk_output_type: console
@@ -146,12 +146,12 @@ Here we evaluate the model using the RRPlot() function.
 
 ### The evaluation of the raw Cox model with RRPlot()
 
-Here we will use the predicted event probability assuming a baseline hazard for events withing 5 years
+Here we will use the predicted event probability assuming a baseline hazard for events
 
 ```{r results = "asis", warning = FALSE , dpi=600, fig.height= 4.5, fig.width= 6.0}
 
 index <- predict(ml,dataBreast)
-timeinterval <- 2*mean(subset(dataBreast,status==1)$time)
+timeinterval <- round(2*mean(subset(dataBreast,status==1)$time),0)
 
 h0 <- sum(dataBreast$status & dataBreast$time <= timeinterval)
 h0 <- h0/sum((dataBreast$time > timeinterval) | (dataBreast$status==1))
