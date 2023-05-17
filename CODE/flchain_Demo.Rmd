@@ -3,14 +3,14 @@ title: 'fflchain: RRPlot Demo'
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    toc: yes
+    df_print: paged
   pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-  html_document:
-    toc: yes
-    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -45,6 +45,7 @@ dataFL <- as.data.frame(cbind(time=odata[rownames(data),"futime"],
                               status=odata[rownames(data),"death"],
                               data))
 pander::pander(table(dataFL$status))
+dataFL$time <- dataFL$time/365
 
 ```
 
@@ -114,6 +115,167 @@ pander::pander(Specificity)
 meanMatrix <- cbind(ROCAUC[,1],CstatCI[,1],Sensitivity[,1],Specificity[,1])
 colnames(meanMatrix) <- c("ROCAUC","C-Stat","Sen","Spe")
 pander::pander(meanMatrix)
+
+```
+
+
+### Train Test Set
+```{r}
+trainsamples <- sample(nrow(dataFL),0.5*nrow(dataFL))
+dataFLTrain <- dataFL[trainsamples,]
+dataFLTest <- dataFL[-trainsamples,]
+
+
+pander::pander(table(dataFLTrain$status))
+pander::pander(table(dataFLTest$status))
+
+```
+
+## Cox Modeling
+
+```{r results = "asis"}
+
+ml <- BSWiMS.model(Surv(time,status)~.,data=dataFLTrain,loops=0)
+sm <- summary(ml)
+pander::pander(sm$coefficients)
+```
+
+## Cox Model Performance
+
+
+### The evaluation of the raw Cox model with RRPlot()
+
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+timeinterval <- 5
+
+h0 <- sum(dataFLTrain$status & dataFLTrain$time <= timeinterval)
+h0 <- h0/sum((dataFLTrain$time > timeinterval) | (dataFLTrain$status==1))
+
+pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters")
+
+index <- predict(ml,dataFLTrain)
+rdata <- cbind(dataFLTrain$status,ppoisGzero(index,h0))
+
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
+                     timetoEvent=dataFLTrain$time,
+                     title="Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+
+```
+
+
+
+### Time to event
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+toinclude <- rdata[,1]==1 
+obstiemToEvent <- dataFLTrain[,"time"]
+summary(obstiemToEvent)
+tmin<-min(obstiemToEvent)
+if (tmin < 0.01) tmin <- 0.01
+tmax<-max(obstiemToEvent)
+sum(toinclude)
+
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
+timetoEvent[is.infinite(timetoEvent)] <- 3*tmax
+timetoEvent[timetoEvent > 3*tmax] <- 3*tmax
+timetoEvent[timetoEvent < tmin] <- tmin
+
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
+sm <- summary(lmfit)
+pander::pander(sm)
+
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[,1],
+     xlab="Expected time",
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
+
+MADerror2 <- mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude]))
+pander::pander(MADerror2)
+
+
+```
+
+### Cox Calibration
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+op <- par(no.readonly = TRUE)
+
+
+calprob <- CoxRiskCalibration(ml,dataFLTrain,"status","time",timeInterval=timeinterval)
+
+
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+```
+
+
+### The RRplot() of the calibrated model
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+h0 <- calprob$h0
+timeinterval <- calprob$timeInterval;
+
+rdata <- cbind(dataFLTrain$status,calprob$prob)
+
+
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
+                     timetoEvent=dataFLTrain$time,
+                     title="Cal. Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+```
+
+### Time to event after calibration
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+
+timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
+tmax<-max(c(obstiemToEvent))
+lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
+sm <- summary(lmfit)
+pander::pander(sm)
+
+plot(timetoEvent,obstiemToEvent,
+     col=1+rdata[,1],
+     xlab="Expected time",
+     ylab="Observed time",
+     main="Expected vs. Observed",
+     xlim=c(tmin,tmax),
+     ylim=c(tmin,tmax),
+     log="xy")
+lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
+txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
+text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
+text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
+legend("bottomright",legend=c("No Event","Event","Linear fit"),
+             pch=c(1,1,-1),
+             col=c(1,2,"blue"),
+             lty=c(-1,-1,1)
+             )
+
+MADerror2 <- c(MADerror2,mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude])))
+pander::pander(MADerror2)
 
 ```
 
