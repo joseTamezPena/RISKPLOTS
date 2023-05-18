@@ -2,7 +2,16 @@
 title: "Simulation"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    fig_crop: no
+    number_sections: yes
 editor_options: 
   chunk_output_type: console
 ---
@@ -84,7 +93,7 @@ simulatedDataFrame <- as.data.frame(cbind(status=eventSet,time=timetoEvent,peven
 
 ## RRplots()
 
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 plotTimeInterval <- 10.0
 
@@ -129,7 +138,7 @@ pander::pander(c(h0=calprob$h0,
 ```
 
 ### After Calibration
-```{r}
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 h0 <- calprob$h0
 
