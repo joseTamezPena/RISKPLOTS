@@ -217,7 +217,7 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 op <- par(no.readonly = TRUE)
 
 
-calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time",timeInterval=timeinterval)
+calprob <- CoxRiskCalibration(ml,dataBrestCancerTrain,"status","time")
 
 
 pander::pander(c(h0=calprob$h0,

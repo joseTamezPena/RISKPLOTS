@@ -88,6 +88,7 @@ Here we will use the predicted event probability assuming a baseline hazard for 
 
 index <- predict(ml,dataColonTrain)
 timeinterval <- round(2*mean(subset(dataColonTrain,status==1)$time),0)
+timeinterval <- 2
 
 h0 <- sum(dataColonTrain$status & dataColonTrain$time <= timeinterval)
 h0 <- h0/sum((dataColonTrain$time > timeinterval) | (dataColonTrain$status==1))
@@ -165,7 +166,7 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 op <- par(no.readonly = TRUE)
 
 
-calprob <- CoxRiskCalibration(ml,dataColonTrain,"status","time",timeInterval=timeinterval)
+calprob <- CoxRiskCalibration(ml,dataColonTrain,"status","time")
 
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
@@ -205,8 +206,8 @@ pander::pander(sm)
 
 plot(timetoEvent,obstiemToEvent,
      col=1+rdata[,1],
-     xlab="Expected time",
-     ylab="Observed time",
+     xlab="Expected Time",
+     ylab="Observed Time",
      main="Expected vs. Observed",
      xlim=c(tmin,tmax),
      ylim=c(tmin,tmax),

@@ -35,7 +35,7 @@ InitialPopulatoin <- 1000
 ContBetaRate_1 <- 0.5
 ContBetaRate_2 <- 0.025
 BinBetaRate_1 <- 1.0
-BinBetaRate_2 <- 3.0
+BinBetaRate_2 <- 2.0
 betaRates <- c(ContBetaRate_1,ContBetaRate_2,BinBetaRate_1,BinBetaRate_2)
 BaselineHazard <- 0.02
 ContVar_1 <- runif(InitialPopulatoin)
@@ -73,7 +73,7 @@ for (time in c(1:(timeSpan/timeInterval)))
   aliveSet <- aliveSet[!isCensoredOrEvent]
   cat(length(aliveSet),"(",sum(isCensoredOrEvent),",",sum(Isevent),",",sum(Iscensored),")\n")
 }
-timetoEvent[aliveSet] <- time*timeInterval - timeInterval/2
+timetoEvent[aliveSet] <- time*timeInterval + timeInterval/2
 summary(timetoEvent)
 table(eventSet)
 pevent <- (1.0-exp(-hazardRate))
@@ -86,14 +86,12 @@ simulatedDataFrame <- as.data.frame(cbind(status=eventSet,time=timetoEvent,peven
 
 ```{r}
 
-plotTimeInterval <- 2.0
+plotTimeInterval <- 10.0
 
 hazard <- -log(1.0-simulatedDataFrame$pevent)
 hboost <- plotTimeInterval/timeInterval
 pvalue <- 1.0-exp(-hboost*hazard)
 
-#prevalence <- sum(simulatedDataFrame$time < plotTimeInterval & simulatedDataFrame$status)/nrow(simulatedDataFrame)
-prevalence <- NULL
 
 rdata <- cbind(simulatedDataFrame$status,pvalue)
 summary(rdata[,2])
@@ -102,12 +100,47 @@ table(simulatedDataFrame$status)
 
 RRAnalysisCI <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=simulatedDataFrame$time,
-                     ExpectedPrevalence=prevalence,
                      title="Simulation",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=plotTimeInterval)
 
 par(op)
+
+```
+
+
+### Risk Calibration
+
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+op <- par(no.readonly = TRUE)
+
+
+crdata <- cbind(simulatedDataFrame$status,pvalue,simulatedDataFrame$time)
+
+#calprob <- CalibrationProbPoissonRisk(crdata,timeInterval=plotTimeInterval)
+calprob <- CalibrationProbPoissonRisk(crdata)
+
+
+pander::pander(c(h0=calprob$h0,
+                 Gain=calprob$hazardGain,
+                 DeltaTime=calprob$timeInterval),
+               caption="Cox Calibration Parameters")
+
+```
+
+### After Calibration
+```{r}
+
+h0 <- calprob$h0
+
+caldata <- cbind(simulatedDataFrame$status,calprob$prob)
+
+
+rrAnalysisTrain <- RRPlot(caldata,atRate=c(0.90,0.80),
+                     timetoEvent=simulatedDataFrame$time,
+                     title="Cal. Simulation",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=calprob$timeInterval)
 
 ```
 

@@ -328,7 +328,7 @@ pander::pander(RRAnalysisAdCox$surdif,caption="Logrank test")
 ## Calibrating the index
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-calprob <- CoxRiskCalibration(mcox,pdata,"TTMevent","RFS",timeInterval=timeinterval)
+calprob <- CoxRiskCalibration(mcox,pdata,"TTMevent","RFS")
 pander::pander(c(h0=calprob$h0,
                  Gain=calprob$hazardGain,
                  DeltaTime=calprob$timeInterval),

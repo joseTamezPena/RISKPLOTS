@@ -218,7 +218,7 @@ pander::pander(MADerror2)
 op <- par(no.readonly = TRUE)
 
 
-calprob <- CoxRiskCalibration(ml,dataFLTrain,"status","time",timeInterval=timeinterval)
+calprob <- CoxRiskCalibration(ml,dataFLTrain,"status","time")
 
 
 pander::pander(c(h0=calprob$h0,
