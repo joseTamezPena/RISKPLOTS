@@ -49,7 +49,7 @@ data <- colon
 data$time <- NULL
 data$study <- NULL
 table(data$status)
-dataColon <- as.data.frame(model.matrix(status~.*.,data))
+dataColon <- as.data.frame(model.matrix(status~.*age,data))
 dataColon$`(Intercept)` <- NULL
 dataColon$time <- time/365
 dataColon$status <- status
@@ -95,7 +95,7 @@ h0 <- h0/sum((dataColonTrain$time > timeinterval) | (dataColonTrain$status==1))
 
 rdata <- cbind(dataColonTrain$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataColonTrain$time,
                      title="Raw Train: Colon Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -103,43 +103,30 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
 
 ```
 
-### Time to event 
+### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-toinclude <- rdata[,1]==1 
-obstiemToEvent <- dataColonTrain[,"time"]
-tmin<-min(obstiemToEvent)
-sum(toinclude)
+obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+pander::pander(obsexp)
+maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
+minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
-tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
-sm <- summary(lmfit)
-pander::pander(sm)
-
-plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[,1],
-     xlab="Expected Time",
-     ylab="Observed Time",
-     main="Expected vs. Observed",
-     xlim=c(tmin,tmax),
-     ylim=c(tmin,tmax),
+plot(obsexp$Expected,obsexp$Observed,
+     xlim=c(minx,maxx),
+     ylim=c(minx,maxx),
+     main="Expected vs Observed",
+     ylab="Observed",
+     xlab="Expected",
+     col=rainbow(nrow(obsexp)),
      log="xy")
-lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
-text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
-text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
-legend("bottomright",legend=c("No Event","Event","Linear fit"),
-             pch=c(1,1,-1),
-             col=c(1,2,"blue"),
-             lty=c(-1,-1,1)
-             )
 
-MADerror2 <- mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude]))
-pander::pander(MADerror2)
+errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
+lines(x=c(1,maxx),y=c(1,maxx),lty=2)
+text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
 
 ```
+
 
 ### Uncalibrated Performance Report
 
@@ -184,7 +171,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataColonTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataColonTrain$time,
                      title="Calibrated Train: Colon",
                      ysurvlim=c(0.00,1.0),
@@ -193,37 +180,27 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
 ```
 
 
-### Time to event after calibration
+### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
+obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+pander::pander(obsexp)
+maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
+minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-
-timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
-tmax<-max(c(obstiemToEvent,timetoEvent))
-lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
-sm <- summary(lmfit)
-pander::pander(sm)
-
-plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[,1],
-     xlab="Expected Time",
-     ylab="Observed Time",
-     main="Expected vs. Observed",
-     xlim=c(tmin,tmax),
-     ylim=c(tmin,tmax),
+plot(obsexp$Expected,obsexp$Observed,
+     xlim=c(minx,maxx),
+     ylim=c(minx,maxx),
+     main="Cal. Expected vs Observed",
+     ylab="Observed",
+     xlab="Expected",
+     col=rainbow(nrow(obsexp)),
      log="xy")
-lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
-text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
-text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
-legend("bottomright",legend=c("No Event","Event","Linear fit"),
-             pch=c(1,1,-1),
-             col=c(1,2,"blue"),
-             lty=c(-1,-1,1)
-             )
 
-MADerror2 <- c(MADerror2,mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude])))
-pander::pander(MADerror2)
+errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
+lines(x=c(1,maxx),y=c(1,maxx),lty=2)
+text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
+
 
 ```
 

@@ -3,14 +3,14 @@ title: 'fflchain: RRPlot Demo'
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    toc: yes
+    df_print: paged
   pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-  html_document:
-    toc: yes
-    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -168,49 +168,75 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 ```
 
 
-
-### Time to event
+### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-toinclude <- rdata[,1]==1 
-obstiemToEvent <- dataFLTrain[,"time"]
-summary(obstiemToEvent)
-tmin<-min(obstiemToEvent)
-if (tmin < 0.01) tmin <- 0.01
-tmax<-max(obstiemToEvent)
-sum(toinclude)
 
-timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
-timetoEvent[is.infinite(timetoEvent)] <- 3*tmax
-timetoEvent[timetoEvent > 3*tmax] <- 3*tmax
-timetoEvent[timetoEvent < tmin] <- tmin
+obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+pander::pander(obsexp)
+maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
+minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
-sm <- summary(lmfit)
-pander::pander(sm)
-
-plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[,1],
-     xlab="Expected time",
-     ylab="Observed time",
-     main="Expected vs. Observed",
-     xlim=c(tmin,tmax),
-     ylim=c(tmin,tmax),
+plot(obsexp$Expected,obsexp$Observed,
+     xlim=c(minx,maxx),
+     ylim=c(minx,maxx),
+     main="Expected vs Observed",
+     ylab="Observed",
+     xlab="Expected",
+     col=rainbow(nrow(obsexp)),
+     cex=1.5,
      log="xy")
-lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
-text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
-text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
-legend("bottomright",legend=c("No Event","Event","Linear fit"),
-             pch=c(1,1,-1),
-             col=c(1,2,"blue"),
-             lty=c(-1,-1,1)
-             )
 
-MADerror2 <- mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude]))
-pander::pander(MADerror2)
+errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
+lines(x=c(1,maxx),y=c(1,maxx),lty=2)
+text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
 
 ```
+
+
+## Test results
+```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+
+index <- predict(ml,dataFLTest)
+rtestdata <- cbind(dataFLTest$status,ppoisGzero(index,h0))
+
+rrAnalysisTest <- RRPlot(rtestdata,atRate=c(0.90,0.80),
+                     timetoEvent=dataFLTest$time,
+                     title="Train: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=timeinterval)
+
+
+```
+
+
+### By Risk Categories on test set
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisTest$OERatio$atThrEstimates
+pander::pander(obsexp)
+maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
+minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
+
+plot(obsexp$Expected,obsexp$Observed,
+     xlim=c(minx,maxx),
+     ylim=c(minx,maxx),
+     main="Test: Expected vs Observed",
+     ylab="Observed",
+     xlab="Expected",
+     col=rainbow(nrow(obsexp)),
+     cex=1.5,
+     log="xy")
+
+errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
+lines(x=c(1,maxx),y=c(1,maxx),lty=2)
+text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
+
+
+```
+
 
 ### Cox Calibration
 
@@ -232,51 +258,81 @@ pander::pander(c(h0=calprob$h0,
 ### The RRplot() of the calibrated model
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-h0 <- calprob$h0
-timeinterval <- calprob$timeInterval;
 
-rdata <- cbind(dataFLTrain$status,calprob$prob)
+index <- predict(ml,dataFLTrain)
+
+calrdata <- cbind(dataFLTrain$status,ppoisGzero(index,calprob$h0))
 
 
-rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
+rrAnalysisCalTrain <- RRPlot(calrdata,atRate=c(0.90,0.80),
                      timetoEvent=dataFLTrain$time,
                      title="Cal. Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
-                     riskTimeInterval=timeinterval)
+                     riskTimeInterval=calprob$timeInterval)
 
 ```
 
-### Time to event after calibration
+### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
+obsexp <- rrAnalysisCalTrain$OERatio$atThrEstimates
+pander::pander(obsexp)
+maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
+minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-timetoEvent <- meanTimeToEvent(rdata[,2],timeinterval)
-tmax<-max(c(obstiemToEvent))
-lmfit <- lm(obstiemToEvent[toinclude]~0+timetoEvent[toinclude])
-sm <- summary(lmfit)
-pander::pander(sm)
-
-plot(timetoEvent,obstiemToEvent,
-     col=1+rdata[,1],
-     xlab="Expected time",
-     ylab="Observed time",
-     main="Expected vs. Observed",
-     xlim=c(tmin,tmax),
-     ylim=c(tmin,tmax),
+plot(obsexp$Expected,obsexp$Observed,
+     xlim=c(minx,maxx),
+     ylim=c(minx,maxx),
+     main="Cal. Expected vs Observed",
+     ylab="Observed",
+     xlab="Expected",
+     col=rainbow(nrow(obsexp)),
+     cex=1.5,
      log="xy")
-lines(x=c(tmin,tmax),y=lmfit$coefficients*c(tmin,tmax),lty=1,col="blue")
-txt <- bquote(paste(R^2 == .(round(sm$r.squared,3))))
-text(tmin+0.005*(tmax-tmin),tmax,txt,cex=0.7)
-text(tmin+0.015*(tmax-tmin),tmax,sprintf("Slope=%4.3f",sm$coefficients[1]),cex=0.7)
-legend("bottomright",legend=c("No Event","Event","Linear fit"),
-             pch=c(1,1,-1),
-             col=c(1,2,"blue"),
-             lty=c(-1,-1,1)
-             )
 
-MADerror2 <- c(MADerror2,mean(abs(timetoEvent[toinclude]-obstiemToEvent[toinclude])))
-pander::pander(MADerror2)
+errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
+lines(x=c(1,maxx),y=c(1,maxx),lty=2)
+text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
+
 
 ```
 
+## Checking the test set
+
+```{r}
+index <- predict(ml,dataFLTest)
+rtestdata <- cbind(dataFLTest$status,ppoisGzero(index,calprob$h0))
+
+rrAnalysisCalTest <- RRPlot(rtestdata,atRate=c(0.90,0.80),
+                     timetoEvent=dataFLTest$time,
+                     title="Cal. Test: Breast Cancer",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=calprob$timeInterval)
+
+```
+
+### By Risk Categories test set
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisCalTest$OERatio$atThrEstimates
+pander::pander(obsexp)
+maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
+minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
+
+plot(obsexp$Expected,obsexp$Observed,
+     xlim=c(minx,maxx),
+     ylim=c(minx,maxx),
+     main="Test Set. Expected vs Observed",
+     ylab="Observed",
+     xlab="Expected",
+     col=rainbow(nrow(obsexp)),
+     cex=1.5,
+     log="xy")
+
+errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
+lines(x=c(1,maxx),y=c(1,maxx),lty=2)
+text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
+
+
+```
 
