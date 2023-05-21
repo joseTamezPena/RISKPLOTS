@@ -71,7 +71,7 @@ pander::pander(table(dataColonTest$status))
 
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-ml <- BSWiMS.model(Surv(time,status)~1,data=dataColonTrain,NumberofRepeats = 3)
+ml <- BSWiMS.model(Surv(time,status)~1,data=dataColonTrain,loops=20,NumberofRepeats = 5)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
@@ -165,17 +165,15 @@ pander::pander(c(h0=calprob$h0,
 ### The RRplot() of the calibrated model
 
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-h0 <- calprob$h0
-timeinterval <- calprob$timeInterval;
 
-rdata <- cbind(dataColonTrain$status,calprob$prob)
+rCaldata <- cbind(dataColonTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
+rrAnalysisCalTrain <- RRPlot(rCaldata,atRate=c(0.90,0.80),
                      timetoEvent=dataColonTrain$time,
                      title="Calibrated Train: Colon",
                      ysurvlim=c(0.00,1.0),
-                     riskTimeInterval=timeinterval)
+                     riskTimeInterval=calprob$timeInterval)
 
 ```
 
@@ -183,7 +181,7 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 ### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
-obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+obsexp <- rrAnalysisCalTrain$OERatio$atThrEstimates
 pander::pander(obsexp)
 maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
 minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
