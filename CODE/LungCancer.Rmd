@@ -166,6 +166,35 @@ text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 ```
 
 
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+
+isevent <- rrAnalysisTrain$timetoEventData$eStatus == 1
+exptime <- boxplot(rrAnalysisTrain$timetoEventData$expectedTime[isevent]~rrAnalysisTrain$timetoEventData$class[isevent],plot=FALSE)
+obstime <- boxplot(rrAnalysisTrain$timetoEventData$eTime[isevent]~rrAnalysisTrain$timetoEventData$class[isevent],plot=FALSE)
+classnames <- attr(rrAnalysisTrain$timetoEventData,"ClassNames") 
+timesdata <- cbind(obstime$stats[c(2,3,4),],exptime$stats[c(2,3,4),])
+rownames(timesdata) <- c("1Q","Median","3Q")
+colnames(timesdata) <- c(paste("O",classnames,sep=":"),paste("E",classnames,sep=":"))
+pander::pander(timesdata)
+
+minv <- min(c(exptime$stats[2,],obstime$stats[2,]))
+if (minv<0.001) minv <-0.001
+maxv <- max(c(exptime$stats[4,],obstime$stats[4,]))
+errbar(exptime$stats[3,],obstime$stats[3,],obstime$stats[2,],obstime$stats[4,],log="xy",
+     xlab="Mean Expected Time",
+     ylab="Mean Observed",
+     xlim=c(minv,maxv),
+     ylim=c(minv,maxv),
+     main="Cal. Estimated Time to Event",col=rainbow(length(classnames)))
+
+lines(x=c(minv,maxv),y=c(minv,maxv),col="black",lty=2)
+legend("topleft",legend=classnames,lty=c(0),pch=c(16),col=rainbow(length(classnames)),cex=0.80)
+
+```
+
 
 ### Uncalibrated Performance Report
 
@@ -243,6 +272,35 @@ text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
 ```
 
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+
+isevent <- rrAnalysisTrain$timetoEventData$eStatus == 1
+exptime <- boxplot(rrAnalysisTrain$timetoEventData$expectedTime[isevent]~rrAnalysisTrain$timetoEventData$class[isevent],plot=FALSE)
+obstime <- boxplot(rrAnalysisTrain$timetoEventData$eTime[isevent]~rrAnalysisTrain$timetoEventData$class[isevent],plot=FALSE)
+classnames <- attr(rrAnalysisTrain$timetoEventData,"ClassNames") 
+timesdata <- cbind(obstime$stats[c(2,3,4),],exptime$stats[c(2,3,4),])
+rownames(timesdata) <- c("1Q","Median","3Q")
+colnames(timesdata) <- c(paste("O",classnames,sep=":"),paste("E",classnames,sep=":"))
+pander::pander(timesdata)
+
+minv <- min(c(exptime$stats[2,],obstime$stats[2,]))
+if (minv<0.001) minv <-0.001
+maxv <- max(c(exptime$stats[4,],obstime$stats[4,]))
+errbar(exptime$stats[3,],obstime$stats[3,],obstime$stats[2,],obstime$stats[4,],log="xy",
+     xlab="Mean Expected Time",
+     ylab="Mean Observed",
+     xlim=c(minv,maxv),
+     ylim=c(minv,maxv),
+     main="Cal. Estimated Time to Event",col=rainbow(length(classnames)))
+
+lines(x=c(minv,maxv),y=c(minv,maxv),col="black",lty=2)
+legend("topleft",legend=classnames,lty=c(0),pch=c(16),col=rainbow(length(classnames)),cex=0.80)
+
+```
 
 ### Calibrated Train Performance
 

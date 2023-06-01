@@ -46,6 +46,7 @@ op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
+source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
 
 ```
 
@@ -72,7 +73,7 @@ odata$size <- 10*(odata$size=="<=20") +
   35*(odata$size=="20-50") + 
   60*(odata$size==">50")
 
-data <- as.data.frame(model.matrix(Surv(rfstime,status)~.*.,odata))
+data <- as.data.frame(model.matrix(Surv(rfstime,status)~.*age,odata))
 
 data$`(Intercept)` <- NULL
 
@@ -157,26 +158,28 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+
+expObs(obsexp,"Train: Expected vs. Observed")
+
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
-
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     log="xy")
-
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
-
 
 ```
 
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisTrain
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Train: Expected vs Observed")
+pander::pander(timesdata)
+
+```
 
 The Time vs. Events are not calibrated.
 Lets do the calibration
@@ -188,6 +191,7 @@ Lets do the calibration
 
 pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
 pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$OERatio$atThrEstimates,caption="O/E Ratio")
 pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
 pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
@@ -235,23 +239,27 @@ rrAnalysisCalTrain <- RRPlot(rcaldata,atRate=c(0.90,0.80),
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 obsexp <- rrAnalysisCalTrain$OERatio$atThrEstimates
+
+expObs(obsexp,"Cal. Expected vs. Observed")
+
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Cal. Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     log="xy")
+```
 
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisCalTrain
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Train: Expected vs Observed")
+
+pander::pander(timesdata)
 
 ```
 
@@ -321,13 +329,44 @@ pander::pander(c(h0=calprob$h0,
 
 rdata <- cbind(dataBrestCancerTest$status,calprob$prob)
 
-rrAnalysis <- RRPlot(rdata,atRate=c(0.90,0.80),
+rrAnalysisTest <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTest$time,
                      title="Cal. Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=calprob$timeInterval)
 
 ```
+
+
+
+### By Risk Categories
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisTest$OERatio$atThrEstimates
+
+expObs(obsexp,"Cal. Expected vs. Observed")
+
+pander::pander(obsexp)
+
+```
+
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisTest
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Train: Expected vs Observed")
+
+pander::pander(timesdata)
+
+```
+
 
 ### After Calibration Report
 
@@ -373,7 +412,7 @@ op <- par(no.readonly = TRUE)
 cprob <- predict(mlog,dataBrestCancerTrain)
 
 rdata <- cbind(dataBrestCancerTrain$status,cprob)
-rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
+rrAnalysisLogTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Logistic Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -384,18 +423,49 @@ par(op)
 
 ```
 
+
+### By Risk Categories
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisLogTrain$OERatio$atThrEstimates
+
+expObs(obsexp,"Logistic: Expected vs. Observed")
+
+pander::pander(obsexp)
+
+```
+
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisLogTrain
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Logistic: Expected vs Observed")
+
+pander::pander(timesdata)
+
+```
+
+
+
 ### Training Report
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
-pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
+pander::pander(t(rrAnalysisLogTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisLogTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisLogTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisLogTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisLogTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisLogTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisLogTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(rrAnalysisLogTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -405,7 +475,7 @@ pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
 pre <- predict(mlog,dataBrestCancerTest)
 rdata <- cbind(dataBrestCancerTest$status,pre)
 
-rrAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
+rrAnalysisLogTest <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataBrestCancerTest$time,
                      title="Logistic Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -415,20 +485,51 @@ par(op)
 
 ```
 
+
+### By Risk Categories
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisLogTest$OERatio$atThrEstimates
+
+expObs(obsexp,"Logistic Test: Expected vs. Observed")
+
+pander::pander(obsexp)
+
+```
+
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisLogTest
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Logistic Test: Expected vs Observed")
+
+pander::pander(timesdata)
+
+```
+
+
 ### Validation Report
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysis$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysis$OERatio$estimate),caption="O/E Ratio")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
-pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(rrAnalysis$surdif,caption="Logrank test")
+pander::pander(t(rrAnalysisLogTest$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisLogTest$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisLogTest$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisLogTest$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisLogTest$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisLogTest$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisLogTest$thr_atP),caption="Probability Thresholds")
+pander::pander(rrAnalysisLogTest$surdif,caption="Logrank test")
 
 ```
+
 
 ## Logistic Model Poisson Calibration
 
@@ -448,7 +549,7 @@ gain <- calprob$hazardGain
 rdata <- cbind(dataBrestCancerTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
+rrAnalysisLogCalTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataBrestCancerTrain$time,
                      title="Cal. Logistic Train: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -460,18 +561,48 @@ par(op)
 
 ```
 
+
+### By Risk Categories
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisLogCalTrain$OERatio$atThrEstimates
+
+expObs(obsexp,"Logistic Cal: Expected vs. Observed")
+
+pander::pander(obsexp)
+
+```
+
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisLogCalTrain
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Logistic Cal: Expected vs Observed")
+
+pander::pander(timesdata)
+
+```
+
+
 ### Report of the calibrated logistic: training
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
-pander::pander(rrAnalysisTrain$c.index,caption="C. Index")
-pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
+pander::pander(t(rrAnalysisLogCalTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisLogCalTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisLogCalTrain$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisLogCalTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisLogCalTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisLogCalTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisLogCalTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(rrAnalysisLogCalTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -486,6 +617,36 @@ rrAnalysisTestLogistic <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 par(op)
+
+```
+
+
+
+### By Risk Categories
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+
+obsexp <- rrAnalysisTestLogistic$OERatio$atThrEstimates
+
+expObs(obsexp,"Logistic Test: Expected vs. Observed")
+
+pander::pander(obsexp)
+
+```
+
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisTestLogistic
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Logistic Test: Expected vs Observed")
+
+pander::pander(timesdata)
 
 ```
 
@@ -531,18 +692,24 @@ legend("topleft",legend = c("Cox","Logistic","Ideal"),
        cex=0.75
 )
 
+dxcox <- rrCoxTestAnalysis$CumulativeOvs$Cumulative-
+       rrCoxTestAnalysis$CumulativeOvs$Observed
 
+dxlogit <- rrAnalysisTestLogistic$CumulativeOvs$Cumulative-
+       rrAnalysisTestLogistic$CumulativeOvs$Observed
+
+miny <- min(c(dxcox,dxlogit))
+maxy <- max(c(dxcox,dxlogit))
 plot(rrCoxTestAnalysis$CumulativeOvs$Observed,
-     rrCoxTestAnalysis$CumulativeOvs$Cumulative-
-       rrCoxTestAnalysis$CumulativeOvs$Observed,
+     dxcox,
      main="Cumulative Risk Difference",
      xlab="Observed",
      ylab="Cumulative Risk - Observed",
      type="l",
+     ylim=c(miny,maxy),
      lty=1)
 lines(rrAnalysisTestLogistic$CumulativeOvs$Observed,
-     rrAnalysisTestLogistic$CumulativeOvs$Cumulative-
-       rrAnalysisTestLogistic$CumulativeOvs$Observed,
+     dxlogit,
      lty=2,
      col="red")
 legend("topleft",legend = c("Cox","Logistic"),
@@ -565,17 +732,26 @@ legend("topleft",legend = c("Cox","Logistic","Ideal"),
        cex=0.75
 )
 
+coxdif <- rrCoxTestAnalysis$OEData$Expected-
+       rrCoxTestAnalysis$OEData$Observed
+
+logdif <- rrAnalysisTestLogistic$OEData$Expected-
+       rrAnalysisTestLogistic$OEData$Observed
+
+miny <- min(c(coxdif,logdif))
+maxy <- max(c(coxdif,logdif))
+
 plot(rrCoxTestAnalysis$OEData$Observed,
-     rrCoxTestAnalysis$OEData$Expected-
-       rrCoxTestAnalysis$OEData$Observed,
+     coxdif,
+      ylim=c(miny,maxy),
+
      main="Expected vs Observed Difference",
      xlab="Observed",
      ylab="Cumulative - Observed",
      type="l",
      lty=1)
 lines(rrAnalysisTestLogistic$OEData$Observed,
-     rrAnalysisTestLogistic$OEData$Expected-
-       rrAnalysisTestLogistic$OEData$Observed,
+     logdif,
      lty=2,col="red")
 
 legend("bottomleft",legend = c("Cox","Logistic"),

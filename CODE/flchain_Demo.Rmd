@@ -28,6 +28,7 @@ op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 pander::panderOptions('keep.trailing.zeros',TRUE)
 
+source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
 
 ```
 # RRPLOTS and flchain
@@ -172,27 +173,28 @@ rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+
+expObs(obsexp,"Train: Expected vs. Observed")
+
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
-
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     cex=1.5,
-     log="xy")
-
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
-
 
 ```
 
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisTrain
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Train: Expected vs Observed")
+pander::pander(timesdata)
+
+```
 
 ## Test results
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
@@ -203,7 +205,7 @@ rtestdata <- cbind(dataFLTest$status,ppoisGzero(index,h0))
 
 rrAnalysisTest <- RRPlot(rtestdata,atRate=c(0.90,0.80),
                      timetoEvent=dataFLTest$time,
-                     title="Train: Breast Cancer",
+                     title="Test: Breast Cancer",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=timeinterval)
 
@@ -211,32 +213,32 @@ rrAnalysisTest <- RRPlot(rtestdata,atRate=c(0.90,0.80),
 ```
 
 
-### By Risk Categories on test set
-
+### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 obsexp <- rrAnalysisTest$OERatio$atThrEstimates
+
+expObs(obsexp,"Test: Expected vs. Observed")
+
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
-
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Test: Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     cex=1.5,
-     log="xy")
-
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
-
 
 ```
 
+
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisTest
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Test: Expected vs Observed")
+pander::pander(timesdata)
+
+```
 
 ### Cox Calibration
 
@@ -272,28 +274,32 @@ rrAnalysisCalTrain <- RRPlot(calrdata,atRate=c(0.90,0.80),
 
 ```
 
+
+
 ### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 obsexp <- rrAnalysisCalTrain$OERatio$atThrEstimates
+
+expObs(obsexp,"Cal: Expected vs. Observed")
+
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Cal. Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     cex=1.5,
-     log="xy")
+```
 
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisCalTrain
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Cal: Expected vs Observed")
+pander::pander(timesdata)
 
 ```
 
@@ -311,28 +317,31 @@ rrAnalysisCalTest <- RRPlot(rtestdata,atRate=c(0.90,0.80),
 
 ```
 
-### By Risk Categories test set
+
+### By Risk Categories
 ```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
 
 obsexp <- rrAnalysisCalTest$OERatio$atThrEstimates
+
+expObs(obsexp,"Cal Test: Expected vs. Observed")
+
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
 
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Test Set. Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     cex=1.5,
-     log="xy")
+```
 
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
+
+### Time to Event Analysis
+
+```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+rrAnalysisdata <- rrAnalysisCalTest
+
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime,rrAnalysisdata$timetoEventData$expectedTime,paired = TRUE))
+highrisk <- rrAnalysisdata$timetoEventData$class == 2
+pander::pander(wilcox.test(rrAnalysisdata$timetoEventData$eTime[highrisk],rrAnalysisdata$timetoEventData$expectedTime[highrisk],paired = TRUE))
+
+timesdata <- expObsTime(rrAnalysisdata,title="Cal Test: Expected vs Observed")
+pander::pander(timesdata)
 
 ```
 
