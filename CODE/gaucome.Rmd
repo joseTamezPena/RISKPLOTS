@@ -15,8 +15,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(survival)
 library(FRESA.CAD)
 #library(corrplot)
-source("~/GitHub/FRESA.CAD/R/RRPlot.R")
-source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+#source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+#source("~/GitHub/FRESA.CAD/R/PoissonEventRiskCalibration.R")
+source("~/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
 
 
 ```
@@ -61,7 +62,7 @@ h0 <- h0/nrow(subset(dataLung,time > timeinterval | status==1))
 
 rdata <- cbind(dataLung$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=dataLung$time,
                      title="Raw Train: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -75,16 +76,18 @@ As we can see the Observed probability as well as the Time vs. Events are not ca
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$OERatio$atThrEstimates,caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
+
 
 ```
 
@@ -114,7 +117,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataLung$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=dataLung$time,
                      title="Train: Lung",
                      ysurvlim=c(0.00,1.0),
@@ -126,16 +129,18 @@ rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90),
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisTrain$OERatio$atThrEstimates,caption="O/E Ratio")
+pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTrain$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTrain$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
+
 
 ```
 
@@ -162,7 +167,7 @@ prob <- ppoisGzero(boxplot(rcv$survTestPredictions[,4]~rownames(rcv$survTestPred
 rdatacv <- cbind(status,prob)
 rownames(rdatacv) <- bbx$names
 
-rrAnalysisTest <- RRPlot(rdatacv,atProb=c(0.90),
+rrAnalysisTest <- RRPlot(rdatacv,atRate=c(0.90),
                      timetoEvent=times,
                      title="Test: Lung Cancer",
                      ysurvlim=c(0.00,1.0),
@@ -174,16 +179,18 @@ rrAnalysisTest <- RRPlot(rdatacv,atProb=c(0.90),
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTest$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTest$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTest$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisTest$OERatio$atThrEstimates,caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTest$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
+
 
 ```
 
@@ -204,7 +211,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(status,calprob$prob)
 
 
-rrAnalysisTest <- RRPlot(rdata,atProb=c(0.90),
+rrAnalysisTest <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=times,
                      title="Calibrated Test: Lung",
                      ysurvlim=c(0.00,1.0),
@@ -215,15 +222,16 @@ rrAnalysisTest <- RRPlot(rdata,atProb=c(0.90),
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTest$OERatio),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Ratio")
+pander::pander(t(rrAnalysisTest$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTest$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisTest$OERatio$atThrEstimates,caption="O/E Ratio")
+pander::pander(t(rrAnalysisTest$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisTest$OAcum95ci),caption="O/Acum Mean")
 pander::pander(rrAnalysisTest$c.index$cstatCI,caption="C. Index")
 pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
 pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
 pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
 pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
-pander::pander(t(rrAnalysisTest$RR_atP),caption="Risk Ratio")
-pander::pander(rrAnalysisTest$sufdif,caption="Logrank test")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```

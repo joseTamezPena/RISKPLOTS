@@ -2,13 +2,16 @@
 title: "free light chain"
 author: "Jose Tamez"
 date: "`r Sys.Date()`"
-output: 
-  pdf_document: 
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
     toc: yes
     fig_caption: yes
     fig_crop: no
     number_sections: yes
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -20,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(survival)
 library(FRESA.CAD)
 #library(corrplot)
-source("~/GitHub/FRESA.CAD/R/RRPlot.R")
+#source("~/GitHub/FRESA.CAD/R/RRPlot.R")
 op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 #pander::panderOptions('table.split.table', 400)
@@ -86,7 +89,7 @@ pander::pander(t(c(h0=h0,timeinterval=timeinterval)),caption="Initial Parameters
 index <- predict(ml,dataFLTrain)
 rdata <- cbind(dataFLTrain$status,ppoisGzero(index,h0))
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataFLTrain$time,
                      title="Raw Train: FLC",
                      ysurvlim=c(0.00,1.0),
@@ -139,7 +142,7 @@ timeinterval <- calprob$timeInterval;
 rdata <- cbind(dataFLTrain$status,calprob$prob)
 
 
-rrAnalysisTrain <- RRPlot(rdata,atProb=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(rdata,atRate=c(0.90,0.80),
                      timetoEvent=dataFLTrain$time,
                      title="Calibrated Train: FLC",
                      ysurvlim=c(0.00,1.0),
