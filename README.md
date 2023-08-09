@@ -70,18 +70,7 @@ They provided sample scripts to estimate risk indexes as well as how to evaluate
 
 ## Usage
 
-``` {\usage}
-  ## This is a sample call. 
-  pinfo <- RRPlot(riskData=cbind(status,probofEvent),
-    timetoEvent=timesToEvent,
-    riskTimeInterval=1,
-    ExpectedPrevalence=NULL,
-    atRate=c(0.90,0.80),
-    atThr=NULL,
-    title="Dummy",
-    ysurvlim=c(0,1.0)
-    )
-```
+`{\usage}   ## This is a sample call.    pinfo <- RRPlot(riskData=cbind(status,probofEvent),     timetoEvent=timesToEvent,     riskTimeInterval=1,     ExpectedPrevalence=NULL,     atRate=c(0.90,0.80),     atThr=NULL,     title="Dummy",     ysurvlim=c(0,1.0)     )`
 
 An actual run of the code is at: CODE/BreastCancerRoyAltman.Rmd
 
