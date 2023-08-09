@@ -46,7 +46,7 @@ op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
-source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
+source("~/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
 
 ```
 
@@ -268,16 +268,16 @@ pander::pander(timesdata)
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysisTrain$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysisTrain$OERatio$estimate),caption="O/E Ratio")
-pander::pander(t(rrAnalysisTrain$OE95ci),caption="O/E Mean")
-pander::pander(t(rrAnalysisTrain$OAcum95ci),caption="O/Acum Mean")
-pander::pander(rrAnalysisTrain$c.index$cstatCI,caption="C. Index")
-pander::pander(t(rrAnalysisTrain$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysisTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysisTrain$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysisTrain$thr_atP),caption="Probability Thresholds")
-pander::pander(rrAnalysisTrain$surdif,caption="Logrank test")
+pander::pander(t(rrAnalysisCalTrain$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisCalTrain$OERatio$estimate),caption="O/E Ratio")
+pander::pander(t(rrAnalysisCalTrain$OE95ci),caption="O/E Mean")
+pander::pander(t(rrAnalysisCalTrain$OAcum95ci),caption="O/Acum Mean")
+pander::pander(rrAnalysisCalTrain$c.index$cstatCI,caption="C. Index")
+pander::pander(t(rrAnalysisCalTrain$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisCalTrain$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisCalTrain$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisCalTrain$thr_atP),caption="Probability Thresholds")
+pander::pander(rrAnalysisCalTrain$surdif,caption="Logrank test")
 
 ```
 
@@ -372,14 +372,14 @@ pander::pander(timesdata)
 
 ```{r results = "asis"}
 
-pander::pander(t(rrAnalysis$keyPoints),caption="Threshold values")
-pander::pander(t(rrAnalysis$OERatio$estimate),caption="O/E Ratio")
-pander::pander(rrAnalysis$c.index,caption="C. Index")
-pander::pander(t(rrAnalysis$ROCAnalysis$aucs),caption="ROC AUC")
-pander::pander((rrAnalysis$ROCAnalysis$sensitivity),caption="Sensitivity")
-pander::pander((rrAnalysis$ROCAnalysis$specificity),caption="Specificity")
-pander::pander(t(rrAnalysis$thr_atP),caption="Probability Thresholds")
-pander::pander(rrAnalysis$surdif,caption="Logrank test")
+pander::pander(t(rrAnalysisTest$keyPoints),caption="Threshold values")
+pander::pander(t(rrAnalysisTest$OERatio$estimate),caption="O/E Ratio")
+pander::pander(rrAnalysisTest$c.index,caption="C. Index")
+pander::pander(t(rrAnalysisTest$ROCAnalysis$aucs),caption="ROC AUC")
+pander::pander((rrAnalysisTest$ROCAnalysis$sensitivity),caption="Sensitivity")
+pander::pander((rrAnalysisTest$ROCAnalysis$specificity),caption="Specificity")
+pander::pander(t(rrAnalysisTest$thr_atP),caption="Probability Thresholds")
+pander::pander(rrAnalysisTest$surdif,caption="Logrank test")
 
 ```
 

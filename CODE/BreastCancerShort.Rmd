@@ -33,7 +33,7 @@ pander::panderOptions('digits', 3)
 #pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
 layout(matrix(1:1, nrow=1))
-source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
+source("~/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
 
 ```
 
@@ -42,7 +42,7 @@ source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
 ```{r}
 
 
-dataBreast <- read.csv("~/GitHub/RISKPLOTS/DATA/wpbc.data", header=FALSE)
+dataBreast <- read.csv("~/Documents/GitHub/RISKPLOTS/DATA/wpbc.data", header=FALSE)
 table(dataBreast$V2)
 
 rownames(dataBreast) <- dataBreast$V1
