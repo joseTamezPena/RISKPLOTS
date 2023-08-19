@@ -37,67 +37,41 @@ layout(matrix(1:1, nrow=1))
 ```
 ## Parameters and risk
 ```{r}
-censoredProb <- 0.0002
-timeSpan <- 20
+censoredProb <- 0.000
+timeSpan <- 10
 timeInterval = 0.01
 InitialPopulatoin <- 1000
-ContBetaRate_1 <- 0.0002
-ContBetaRate_2 <- 0.000001
-BinBetaRate_1 <- 0.001
-BinBetaRate_2 <- 0.003
-BaselineHazard <- ContBetaRate_1
-betaRates <- c(BaselineHazard,ContBetaRate_1,ContBetaRate_2,BinBetaRate_1,BinBetaRate_2)
-BaseVar <- rep(1,InitialPopulatoin)
-ContVar_1 <- runif(InitialPopulatoin)
-summary(ContVar_1)
-ContVar_2 <- rnorm(InitialPopulatoin,50,10)
-ContVar_2[ContVar_2 < 1] <- 1 
-summary(ContVar_2)
-BinVar_1 <- rbinom(InitialPopulatoin,1,0.35)
-table(BinVar_1)
-BinVar_2 <- rbinom(InitialPopulatoin,1,0.35)
-table(BinVar_2)
+ContBetaRate_1 <- 0.00005
+BinBetaRate_1 <- 0.0005
+BinBetaRate_2 <- 0.0002
+BaselineHazard <- 0.00001
+BinPrevalence1 <- 0.10
+BinPrevalence2 <- 0.10
 
-dataFeatures <- as.matrix(cbind(BaseVar,ContVar_1,ContVar_2,BinVar_1,BinVar_2))
-hazardRate <- as.numeric(dataFeatures %*% betaRates)
-summary(hazardRate)
+RContBetaRate_1 <- ContBetaRate_1
+RBinBetaRate_1 <- BinBetaRate_1
+RBinBetaRate_2 <- BinBetaRate_2
+RBaselineHazard <- BaselineHazard
+
+
 
 ```
 
-### Getting the events and time to event
+### Simulate
 
 ```{r}
-aliveSet <- c(1:InitialPopulatoin)
-eventSet <- numeric(InitialPopulatoin)
-timetoEvent <- numeric(InitialPopulatoin)
+#source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 
-for (time in c(1:(timeSpan/timeInterval)))
-{
-  randProb <- runif(length(aliveSet))
-  Iscensored <- randProb <= censoredProb
-  Isevent <- randProb <= (1.0-exp(-hazardRate[aliveSet]))
-  Iscensored <- Iscensored & !Isevent
-  eventSet[aliveSet] <- Isevent
-  timetoEvent[aliveSet] <- time*timeInterval-timeInterval/2
-  isCensoredOrEvent <- Iscensored | Isevent
-  aliveSet <- aliveSet[!isCensoredOrEvent]
-#  cat(length(aliveSet),"(",sum(isCensoredOrEvent),",",sum(Isevent),",",sum(Iscensored),")\n")
-}
-timetoEvent[aliveSet] <- time*timeInterval + timeInterval/2
-summary(timetoEvent)
-table(eventSet)
-pevent <- (1.0-exp(-hazardRate))
-summary(pevent)
-simulatedDataFrame <- as.data.frame(cbind(status=eventSet,time=timetoEvent,pevent=pevent,dataFeatures))
+source("~/GitHub/RISKPLOTS/simulate_events.R")
 
 ```
 
 
-## RRplots()
+## RRplots Low Prevalence
 
-```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
-plotTimeInterval <- 2.0
+plotTimeInterval <- timeSpan*3 #Not calibrated.
 
 hazard <- -log(1.0-simulatedDataFrame$pevent)
 hboost <- plotTimeInterval/timeInterval
@@ -108,82 +82,33 @@ rdata <- cbind(simulatedDataFrame$status,pvalue)
 summary(rdata[,2])
 table(simulatedDataFrame$status)
 
-
-RRAnalysisCI <- RRPlot(rdata,atRate=c(0.90,0.80),
+par(cex=0.75)
+RRAnalysisCI <- RRPlot(rdata,atRate=c(0.90),
                      timetoEvent=simulatedDataFrame$time,
                      title="Simulation",
                      ysurvlim=c(0.00,1.0),
                      riskTimeInterval=plotTimeInterval)
+
+RRAnalysisCI_LP <- RRAnalysisCI
 
 par(op)
 
 ```
 
 
-### By Risk Categories
-```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+### By Risk Categories and Mean Time to Event
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
-obsexp <- RRAnalysisCI$OERatio$atThrEstimates
+source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
-
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Cal. Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     log="xy")
-
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
-
-
-
-```
-
-### Time to Event Analysis
-
-```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-
-
-isevent <- RRAnalysisCI$timetoEventData$eStatus == 1
-exptime <- boxplot(RRAnalysisCI$timetoEventData$expectedTime[isevent]~RRAnalysisCI$timetoEventData$class[isevent],
-                   xlab="Class",
-                   ylab="Time",
-                   main="Expected Time",plot=FALSE)
-obstime <- boxplot(RRAnalysisCI$timetoEventData$eTime[isevent]~RRAnalysisCI$timetoEventData$class[isevent],
-                   xlab="Class",
-                   ylab="Time",
-                   main="Observed Time",
-                   at=exptime$stats[3,],plot=FALSE)
-classnames <- attr(RRAnalysisCI$timetoEventData,"ClassNames") 
-timesdata <- cbind(obstime$stats[c(2,3,4),],exptime$stats[c(2,3,4),])
-rownames(timesdata) <- c("1Q","Median","3Q")
-colnames(timesdata) <- c(paste("O",classnames,sep=":"),paste("E",classnames,sep=":"))
 pander::pander(timesdata)
 
-minv <- min(c(exptime$stats[2,],obstime$stats[2,]))
-if (minv<0.001) minv <-0.001
-maxv <- max(c(exptime$stats[4,],obstime$stats[4,]))
-errbar(exptime$stats[3,],obstime$stats[3,],obstime$stats[2,],obstime$stats[4,],log="xy",
-     xlab="Mean Expected Time",
-     ylab="Mean Observed",
-     xlim=c(minv,maxv),
-     ylim=c(minv,maxv),
-     main="Estimated Time to Event",col=rainbow(length(classnames)))
-
-lines(x=c(minv,maxv),y=c(minv,maxv),col="black",lty=2)
-legend("topleft",legend=classnames,lty=c(0),pch=c(16),col=rainbow(length(classnames)),cex=0.80)
-
 ```
+
 
 ### Risk Calibration
 
-```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+```{r results = "asis", warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 op <- par(no.readonly = TRUE)
 
 
@@ -201,14 +126,15 @@ pander::pander(c(h0=calprob$h0,
 ```
 
 ### After Calibration
-```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
 h0 <- calprob$h0
 
 caldata <- cbind(simulatedDataFrame$status,calprob$prob)
 
+par(cex=0.75)
 
-rrAnalysisTrain <- RRPlot(caldata,atRate=c(0.90,0.80),
+rrAnalysisTrain <- RRPlot(caldata,atRate=c(0.90),
                      timetoEvent=simulatedDataFrame$time,
                      title="Cal. Simulation",
                      ysurvlim=c(0.00,1.0),
@@ -217,65 +143,135 @@ rrAnalysisTrain <- RRPlot(caldata,atRate=c(0.90,0.80),
 ```
 
 
-### By Risk Categories
-```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
-
-obsexp <- rrAnalysisTrain$OERatio$atThrEstimates
+### By Risk Categories and Mean Time to Event after calibration
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
+source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 pander::pander(obsexp)
-maxx <- 1.1*max(c(obsexp$Observed,obsexp$Expected))
-minx <- 0.9*min(c(obsexp$Observed,obsexp$Expected))
+pander::pander(timesdata)
 
-plot(obsexp$Expected,obsexp$Observed,
-     xlim=c(minx,maxx),
-     ylim=c(minx,maxx),
-     main="Cal. Expected vs Observed",
-     ylab="Observed",
-     xlab="Expected",
-     col=rainbow(nrow(obsexp)),
-     log="xy")
+```
 
-errbar(obsexp$Expected,obsexp$Observed,obsexp$L.CI,obsexp$H.CI,add=TRUE,pch=0,errbar.col=rainbow(nrow(obsexp)),cex=0.75)
-lines(x=c(1,maxx),y=c(1,maxx),lty=2)
-text(obsexp$Expected,obsexp$Observed,rownames(obsexp),pos=2,cex=0.75)
 
+## Second Simulation
+```{r}
+
+ContBetaRate_1 <- RContBetaRate_1*3
+BinBetaRate_1 <- RBinBetaRate_1*2
+BinBetaRate_2 <- RBinBetaRate_2*2
+BaselineHazard <- RBaselineHazard*3
+
+source("~/GitHub/RISKPLOTS/simulate_events.R")
 
 ```
 
 
 
-### Time to Event Analysis
+## RRplots High prevalence
 
-```{r results = "asis",warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
+
+plotTimeInterval <- timeSpan # Calibrated
+
+hazard <- -log(1.0-simulatedDataFrame$pevent)
+hboost <- plotTimeInterval/timeInterval
+pvalue <- 1.0-exp(-hboost*hazard)
 
 
-isevent <- RRAnalysisCI$timetoEventData$eStatus == 1
-exptime <- boxplot(RRAnalysisCI$timetoEventData$expectedTime[isevent]~RRAnalysisCI$timetoEventData$class[isevent],
-                   xlab="Class",
-                   ylab="Time",
-                   main="Expected Time",plot=FALSE)
-obstime <- boxplot(RRAnalysisCI$timetoEventData$eTime[isevent]~RRAnalysisCI$timetoEventData$class[isevent],
-                   xlab="Class",
-                   ylab="Time",
-                   main="Observed Time",
-                   at=exptime$stats[3,],plot=FALSE)
-classnames <- attr(RRAnalysisCI$timetoEventData,"ClassNames") 
-timesdata <- cbind(obstime$stats[c(2,3,4),],exptime$stats[c(2,3,4),])
-rownames(timesdata) <- c("1Q","Median","3Q")
-colnames(timesdata) <- c(paste("O",classnames,sep=":"),paste("E",classnames,sep=":"))
+rdata <- cbind(simulatedDataFrame$status,pvalue)
+summary(rdata[,2])
+table(simulatedDataFrame$status)
+
+par(cex=0.75)
+
+RRAnalysisCI <- RRPlot(rdata,atRate=c(0.90),
+                     timetoEvent=simulatedDataFrame$time,
+                     title="Simulation 2",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=plotTimeInterval)
+
+par(op)
+
+```
+
+
+### By Risk Categories and Mean Time to Event
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
+
+source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
+
+pander::pander(obsexp)
 pander::pander(timesdata)
 
-minv <- min(c(exptime$stats[2,],obstime$stats[2,]))
-if (minv<0.001) minv <-0.001
-maxv <- max(c(exptime$stats[4,],obstime$stats[4,]))
-errbar(exptime$stats[3,],obstime$stats[3,],obstime$stats[2,],obstime$stats[4,],log="xy",
-     xlab="Mean Expected Time",
-     ylab="Mean Observed",
-     xlim=c(minv,maxv),
-     ylim=c(minv,maxv),
-     main="Estimated Time to Event",col=rainbow(length(classnames)))
+```
 
-lines(x=c(minv,maxv),y=c(minv,maxv),col="black",lty=2)
-legend("topleft",legend=classnames,lty=c(0),pch=c(16),col=rainbow(length(classnames)),cex=0.80)
+### Comparing the ROC
+
+```{r}
+
+pander::pander(roc.test(RRAnalysisCI_LP$ROCAnalysis$ROC.analysis$roc.predictor,RRAnalysisCI$ROCAnalysis$ROC.analysis$roc.predictor))
+
+
+```
+
+
+## Third Simulation
+```{r}
+
+ContBetaRate_1 <- RContBetaRate_1*10
+BinBetaRate_1 <- RBinBetaRate_1*5
+BinBetaRate_2 <- RBinBetaRate_2*5
+BaselineHazard <- RBaselineHazard*5
+
+source("~/GitHub/RISKPLOTS/simulate_events.R")
+
+```
+
+
+
+## RRplots Higher prevalence
+
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
+
+plotTimeInterval <- timeSpan # Calibrated
+
+hazard <- -log(1.0-simulatedDataFrame$pevent)
+hboost <- plotTimeInterval/timeInterval
+pvalue <- 1.0-exp(-hboost*hazard)
+
+
+rdata <- cbind(simulatedDataFrame$status,pvalue)
+summary(rdata[,2])
+table(simulatedDataFrame$status)
+par(cex=0.75)
+
+
+RRAnalysisCI <- RRPlot(rdata,atRate=c(0.90),
+                     timetoEvent=simulatedDataFrame$time,
+                     title="Simulation 3",
+                     ysurvlim=c(0.00,1.0),
+                     riskTimeInterval=plotTimeInterval)
+
+par(op)
+
+```
+
+
+### By Risk Categories and Mean Time to Event
+```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
+
+source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
+
+pander::pander(obsexp)
+pander::pander(timesdata)
+
+```
+
+### Comparing the ROC
+
+```{r}
+
+pander::pander(roc.test(RRAnalysisCI_LP$ROCAnalysis$ROC.analysis$roc.predictor,RRAnalysisCI$ROCAnalysis$ROC.analysis$roc.predictor))
+
 
 ```
 
