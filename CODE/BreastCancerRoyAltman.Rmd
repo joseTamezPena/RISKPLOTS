@@ -46,7 +46,7 @@ op <- par(no.readonly = TRUE)
 pander::panderOptions('digits', 3)
 pander::panderOptions('table.split.table', 400)
 pander::panderOptions('keep.trailing.zeros',TRUE)
-source("~/Documents/GitHub/RISKPLOTS/CODE/auxplots.R")
+source("~/GitHub/RISKPLOTS/CODE/auxplots.R")
 
 ```
 
@@ -119,7 +119,8 @@ pander::pander(table(odata[rownames(data),"status"]), caption="gbsg")
 
 ```{r results = "asis"}
 
-ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,loops=1,NumberofRepeats = 5)
+#ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,loops=1,NumberofRepeats = 5)
+ml <- BSWiMS.model(Surv(time,status)~.,data=dataBrestCancerTrain,NumberofRepeats = 5)
 sm <- summary(ml)
 pander::pander(sm$coefficients)
 ```
@@ -292,6 +293,7 @@ par(op)
 
 prob <- ppoisGzero(index,h0)
 rdata <- cbind(dataBrestCancerTest$status,prob)
+#rrCoxTestAnalysis <- RRPlot(rdata,atThr=c(0.9,0.8),
 rrCoxTestAnalysis <- RRPlot(rdata,atThr=rrAnalysisTrain$thr_atP,
                      timetoEvent=dataBrestCancerTest$time,
                      title="Test: Breast Cancer",
@@ -396,7 +398,8 @@ dataBrestCancerR$status <- dataBrestCancerR$status * (dataBrestCancerR$time < 5)
 dataBrestCancerR$time <- NULL
 
 #ml <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=20,NumberofRepeats = 5)
-mlog <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=1,NumberofRepeats = 5)
+#mlog <- BSWiMS.model(status~1,data=dataBrestCancerR,loops=1,NumberofRepeats = 5)
+mlog <- BSWiMS.model(status~1,data=dataBrestCancerR,NumberofRepeats = 5)
 sm <- summary(mlog)
 pander::pander(sm$coefficients)
 
