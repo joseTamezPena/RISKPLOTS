@@ -51,6 +51,28 @@ dataBreast <- sapply(dataBreast,as.numeric)
 dataBreast <- as.data.frame(dataBreast[complete.cases(dataBreast),])
 table(dataBreast$status)
 ```
+}
+
+## Risk of Feature 1
+```{r}
+analysisRR <- RRPlot(cbind(dataBreast$status,dataBreast$V10))
+analysisRR$keyPoints
+analysisRR$ROCAnalysis$aucs
+analysisRR$c.index
+analysisRR$surdif
+
+
+analysisRR <- RRPlot(cbind(dataBreast$status,dataBreast$V4),timetoEvent = dataBreast$time)
+
+analysisRR$keyPoints
+analysisRR$ROCAnalysis$aucs
+analysisRR$c.index
+analysisRR$surdif
+
+
+
+```
+
 
 ## Modeling
 ```{r results = "asis", warning = FALSE , dpi=300, fig.height= 5.0, fig.width= 7.0}

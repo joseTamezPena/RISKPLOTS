@@ -70,7 +70,18 @@ They provided sample scripts to estimate risk indexes as well as how to evaluate
 
 ## Usage
 
-`{\usage}   ## This is a sample call.    pinfo <- RRPlot(riskData=cbind(status,probofEvent),     timetoEvent=timesToEvent,     riskTimeInterval=1,     ExpectedPrevalence=NULL,     atRate=c(0.90,0.80),     atThr=NULL,     title="Dummy",     ysurvlim=c(0,1.0)     )`
+``` R
+   ## This is a sample call.    
+   pinfo <- RRPlot(riskData=cbind(status,probofEvent),     
+                   timetoEvent=timesToEvent,     
+                   riskTimeInterval=1,     
+                   ExpectedPrevalence=NULL,     
+                   atRate=c(0.90,0.80),     
+                   atThr=NULL,     
+                   title="Dummy",     
+                   ysurvlim=c(0,1.0)
+   )
+```
 
 An actual run of the code is at: CODE/BreastCancerRoyAltman.Rmd
 
@@ -337,7 +348,7 @@ It reports thresholds for user-specified values of sensitivity (\@0.9 and \@0.8)
     </div>
 
 |             |      |          |          |            | Logrank test Chisq = 479.123919 on 2 degrees of freedom, p = 0.000000 |
-|-------------|------|----------|----------|------------|-----------------------------------------------------------------------|
+|-----------|-----------|-----------|-----------|-----------|--------------------|
 |             | N    | Observed | Expected | (O-E)\^2/E | (O-E)\^2/V                                                            |
 | **class=0** | 1983 | 812      | 1145     | 96.7       | 398.2                                                                 |
 | **class=1** | 396  | 250      | 177      | 29.6       | 33.6                                                                  |
