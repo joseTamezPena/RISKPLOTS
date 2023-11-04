@@ -55,7 +55,7 @@ table(dataBreast$status)
 
 ## Risk of Feature 1
 ```{r}
-analysisRR <- RRPlot(cbind(dataBreast$status,dataBreast$V10))
+analysisRR <- RRPlot(cbind(dataBreast$status,dataBreast$V4))
 analysisRR$keyPoints
 analysisRR$ROCAnalysis$aucs
 analysisRR$c.index
