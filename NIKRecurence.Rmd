@@ -21,6 +21,25 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Install from GIT
+```{r}
+
+# Install 'devtools' package if you haven't already
+install.packages("devtools")
+
+# Install the package from GitHub
+devtools::install_github("https://github.com/joseTamezPena/FRESA.CAD")
+
+if (!require("BiocManager", quietly = TRUE))
+{
+  install.packages("BiocManager")
+ BiocManager::install(version = "3.19")
+ BiocManager::install(c("GenomicFeatures", "AnnotationDbi"))
+}
+
+```
+
+
 ## The libraries
 
 ```{r}
@@ -39,8 +58,9 @@ pander::panderOptions('keep.trailing.zeros',TRUE)
 if (!require("BiocManager", quietly = TRUE))
 {
     install.packages("BiocManager")
-    BiocManager::install("seventyGeneData")
 }
+BiocManager::install("seventyGeneData")
+
 ```
 
 ```{r}
@@ -609,8 +629,9 @@ pander::pander(NetBen)
 
 ```{r results = "asis"}
 
-pander::pander(pROC::roc.test(RRAnalysisCI$ROCAnalysis$ROC.analysis$roc.predictor,
-                              RRAnalysisAdCox$ROCAnalysis$ROC.analysis$roc.predictor))
+  
+pander::pander(pROC::roc.test(RRAnalysisCI$ROCAnalysis$ROC.analysis,
+                              RRAnalysisAdCox$ROCAnalysis$ROC.analysis))
 
 ```
 
