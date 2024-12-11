@@ -54,7 +54,6 @@ RBinBetaRate_2 <- BinBetaRate_2
 RBaselineHazard <- BaselineHazard
 
 
-
 ```
 
 ### Simulate
@@ -62,7 +61,7 @@ RBaselineHazard <- BaselineHazard
 ```{r}
 #source("C:/Users/jtame/Documents/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 
-source("~/GitHub/RISKPLOTS/simulate_events.R")
+source("~/Documents/GitHub/RISKPLOTS/simulate_events.R")
 
 ```
 
@@ -71,7 +70,7 @@ source("~/GitHub/RISKPLOTS/simulate_events.R")
 
 ```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
-plotTimeInterval <- timeSpan*3 #Not calibrated.
+plotTimeInterval <- timeSpan
 
 hazard <- -log(1.0-simulatedDataFrame$pevent)
 hboost <- plotTimeInterval/timeInterval
@@ -99,7 +98,7 @@ par(op)
 ### By Risk Categories and Mean Time to Event
 ```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
-source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
+source("~/Documents/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 pander::pander(obsexp)
 pander::pander(timesdata)
 
@@ -145,7 +144,7 @@ rrAnalysisTrain <- RRPlot(caldata,atRate=c(0.90),
 
 ### By Risk Categories and Mean Time to Event after calibration
 ```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
-source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
+source("~/Documents/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 pander::pander(obsexp)
 pander::pander(timesdata)
 
@@ -160,7 +159,7 @@ BinBetaRate_1 <- RBinBetaRate_1*2
 BinBetaRate_2 <- RBinBetaRate_2*2
 BaselineHazard <- RBaselineHazard*3
 
-source("~/GitHub/RISKPLOTS/simulate_events.R")
+source("~/Documents/GitHub/RISKPLOTS/simulate_events.R")
 
 ```
 
@@ -197,7 +196,7 @@ par(op)
 ### By Risk Categories and Mean Time to Event
 ```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
-source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
+source("~/Documents/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 
 pander::pander(obsexp)
 pander::pander(timesdata)
@@ -208,7 +207,7 @@ pander::pander(timesdata)
 
 ```{r}
 
-pander::pander(roc.test(RRAnalysisCI_LP$ROCAnalysis$ROC.analysis$roc.predictor,RRAnalysisCI$ROCAnalysis$ROC.analysis$roc.predictor))
+pander::pander(roc.test(RRAnalysisCI_LP$ROCAnalysis$ROC.analysis,RRAnalysisCI$ROCAnalysis$ROC.analysis))
 
 
 ```
@@ -222,7 +221,7 @@ BinBetaRate_1 <- RBinBetaRate_1*5
 BinBetaRate_2 <- RBinBetaRate_2*5
 BaselineHazard <- RBaselineHazard*5
 
-source("~/GitHub/RISKPLOTS/simulate_events.R")
+source("~/Documents/GitHub/RISKPLOTS/simulate_events.R")
 
 ```
 
@@ -259,7 +258,7 @@ par(op)
 ### By Risk Categories and Mean Time to Event
 ```{r results = "asis",warning = FALSE , dpi=600, fig.height= 5.0, fig.width= 7.0}
 
-source("~/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
+source("~/Documents/GitHub/RISKPLOTS/PlotRiskCategoriesAndTimetoEvent.R")
 
 pander::pander(obsexp)
 pander::pander(timesdata)
@@ -270,7 +269,7 @@ pander::pander(timesdata)
 
 ```{r}
 
-pander::pander(roc.test(RRAnalysisCI_LP$ROCAnalysis$ROC.analysis$roc.predictor,RRAnalysisCI$ROCAnalysis$ROC.analysis$roc.predictor))
+pander::pander(roc.test(RRAnalysisCI_LP$ROCAnalysis$ROC.analysis,RRAnalysisCI$ROCAnalysis$ROC.analysis))
 
 
 ```
